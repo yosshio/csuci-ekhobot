@@ -26,13 +26,14 @@ const SEED_URLS = [
   'https://www.csuci.edu/academics/',
   'https://www.csuci.edu/studentlife/',
   'https://www.csuci.edu/campuslife/',
+  'https://www.csuci.edu/studenthealth/',
 
   'https://www.csuci.edu/learningresourcecenter/',
   'https://www.csuci.edu/events/',
   'https://www.csuci.edu/advising/'
 ];
 
-const MAX_PAGES = 50;       // how many pages to crawl total
+const MAX_PAGES = 40;       // how many pages to crawl total
 const MAX_TEXT_PER_PAGE = 1500; // characters per page to keep
 const CRAWL_DELAY_MS = 300; // delay between requests
 
@@ -122,22 +123,14 @@ async function crawlSite() {
 // Start crawling when server starts
 crawlSite();
 
-const SYSTEM_PROMPT = `You are EkhoBot, the friendly virtual assistant for 
-CSU Channel Islands (CSUCI) — named after the school's dolphin mascot, Ekho.
-
-You help students, parents, and visitors with admissions, financial aid, 
-campus events, housing, academic programs, departments, and general FAQs.
-
-You have been given real content crawled directly from the CSUCI website.
-Always use this content to give accurate, specific answers.
-If the content does not cover the question, say so and direct to www.csuci.edu or (805) 437-8400.
-
-CRITICAL RULES:
-- Keep every response to 2-3 sentences maximum.
-- NEVER list options or bullet points. The UI already shows buttons for navigation.
-- Answer the specific question directly and concisely.
-- Never make up phone numbers, emails, dates, or staff names not found in the content.
-- Warm and helpful tone, always brief.`;
+const SYSTEM_PROMPT = `You are EkhoBot, the virtual assistant for CSU Channel Islands (CSUCI).
+STRICT RULES — no exceptions:
+- Maximum 1-2 sentences per response. Never more.
+- No bullet points, no lists, no numbered steps.
+- No introductory phrases like "Great question!" or "Sure!".
+- Just answer directly and stop.
+- If unsure, say: "Visit csuci.edu or call (805) 437-8400."
+- Never invent phone numbers, emails, or dates.`;
 
 app.post('/chat', async (req, res) => {
   const { messages } = req.body;
