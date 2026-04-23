@@ -2,10 +2,13 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
-import * as cheerio from 'cheerio';
+import { pipeline } from '@xenova/transformers';
+import pg from 'pg';
 
 const app = express();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+await db.connect();
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -18,149 +21,120 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Pages to start crawling from
-const SEED_URLS = [
-  'https://www.csuci.edu/admissions/',
-  'https://www.csuci.edu/financialaid/',
-  'https://www.csuci.edu/housing/',
-  'https://www.csuci.edu/academics/',
-  'https://www.csuci.edu/studentlife/',
-  'https://www.csuci.edu/campuslife/',
-  'https://www.csuci.edu/studenthealth/',
-
-  'https://www.csuci.edu/learningresourcecenter/',
-  'https://www.csuci.edu/events/',
-  'https://www.csuci.edu/advising/'
-];
-
-const MAX_PAGES = 40;       // how many pages to crawl total
-const MAX_TEXT_PER_PAGE = 1500; // characters per page to keep
-const CRAWL_DELAY_MS = 300; // delay between requests
-
-let siteContext = '';
-let crawlComplete = false;
-
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function crawlSite() {
-  console.log('Starting CSUCI site crawl...');
-  const visited = new Set();
-  const queue = [...SEED_URLS];
-  const chunks = [];
-
-  while (queue.length > 0 && visited.size < MAX_PAGES) {
-    const url = queue.shift();
-    if (visited.has(url)) continue;
-    visited.add(url);
-
-    try {
-      console.log(`Crawling (${visited.size}/${MAX_PAGES}): ${url}`);
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'EkhoBot/1.0 (CSUCI Capstone Research Bot)' }
-      });
-
-      if (!res.ok) continue;
-      const html = await res.text();
-      const $ = cheerio.load(html);
-
-      // Remove noise
-      $('nav, footer, script, style, header, .menu, .navigation, .breadcrumb, .sidebar').remove();
-
-      // Extract clean text
-      const text = $('main, .content, .page-content, body')
-        .first()
-        .text()
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, MAX_TEXT_PER_PAGE);
-
-      if (text.length > 100) {
-        chunks.push(`[PAGE: ${url}]\n${text}`);
-      }
-
-      // Find internal links and queue them
-      $('a[href]').each((_, el) => {
-        const href = $(el).attr('href');
-        if (!href) return;
-
-        let fullUrl = '';
-        if (href.startsWith('http') && href.includes('csuci.edu')) {
-          fullUrl = href.split('#')[0]; // remove anchors
-        } else if (href.startsWith('/') && !href.startsWith('//')) {
-          fullUrl = 'https://www.csuci.edu' + href.split('#')[0];
-        }
-
-        // Skip non-content URLs
-        if (
-          fullUrl &&
-          !visited.has(fullUrl) &&
-          !queue.includes(fullUrl) &&
-          !fullUrl.match(/\.(pdf|jpg|png|gif|zip|doc|docx|ppt|mp4|css|js)$/i) &&
-          !fullUrl.includes('mailto:') &&
-          !fullUrl.includes('tel:') &&
-          !fullUrl.includes('login') &&
-          !fullUrl.includes('logout')
-        ) {
-          queue.push(fullUrl);
-        }
-      });
-
-      await sleep(CRAWL_DELAY_MS);
-
-    } catch (err) {
-      console.log(`Could not crawl ${url}:`, err.message);
-    }
+// --- Local embedding model (no API key needed) ---
+let embedder = null;
+async function loadEmbedder() {
+  if (!embedder) {
+    console.log('Loading embedding model...');
+    embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    console.log('Embedding model ready.');
   }
-
-  siteContext = chunks.join('\n\n---\n\n');
-  crawlComplete = true;
-  console.log(`Crawl complete. ${visited.size} pages crawled, ${chunks.length} pages with content.`);
-  console.log(`Total context: ${siteContext.length} characters`);
+  return embedder;
 }
 
-// Start crawling when server starts
-crawlSite();
+async function getEmbedding(text) {
+  const model = await loadEmbedder();
+  const output = await model(text.slice(0, 8000), {
+    pooling: 'mean',
+    normalize: true,
+  });
+  return Array.from(output.data);
+}
+
+// Load embedder on startup
+loadEmbedder();
+
+// --- Search the vector database for relevant chunks ---
+const SIMILARITY_THRESHOLD = 0.4;
+const TOP_K = 5;
+
+async function searchChunks(query) {
+  const embedding = await getEmbedding(query);
+  const result = await db.query(
+    `SELECT content, url, title,
+     1 - (embedding <=> $1::vector) as similarity
+     FROM csuci_chunks
+     ORDER BY embedding <=> $1::vector
+     LIMIT $2`,
+    [JSON.stringify(embedding), TOP_K]
+  );
+  return result.rows;
+}
+
+// --- Brave Search fallback for when no good DB match is found ---
+async function webSearchFallback(query) {
+  if (!process.env.BRAVE_SEARCH_KEY) return '';
+  try {
+    const res = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent('CSUCI ' + query)}&count=3`,
+      { headers: { 'X-Subscription-Token': process.env.BRAVE_SEARCH_KEY } }
+    );
+    const data = await res.json();
+    return data.web?.results?.map(r => `${r.title}: ${r.description}`).join('\n') || '';
+  } catch (e) {
+    console.log('Web search fallback failed:', e.message);
+    return '';
+  }
+}
 
 const SYSTEM_PROMPT = `You are EkhoBot, the virtual assistant for CSU Channel Islands (CSUCI).
+Answer using only the context provided below. If the context does not cover the question say so briefly and direct them to csuci.edu.
+
 STRICT RULES — no exceptions:
 - Maximum 1-2 sentences per response. Never more.
 - No bullet points, no lists, no numbered steps.
 - No introductory phrases like "Great question!" or "Sure!".
-- Just answer directly and stop.
-- If unsure, say: "Visit csuci.edu or call (805) 437-8400."
-- Never invent phone numbers, emails, or dates.`;
+- Answer directly and stop.
+- If unsure: "Visit csuci.edu or call (805) 437-8400."
+- Never invent phone numbers, emails, or dates not found in the context.
+
+For upcoming campus events, direct users to:
+- Website: csuci.edu/events/index.htm
+- Email: events@csuci.edu  
+- Phone: 805-437-3900`;
 
 app.post('/chat', async (req, res) => {
   const { messages } = req.body;
-
-  // If still crawling, let the user know
-  if (!crawlComplete) {
-    return res.json({
-      reply: "I'm still loading CSUCI information, give me just a moment and try again!"
-    });
-  }
+  const lastMessage = messages[messages.length - 1].content;
 
   try {
+    // Search vector database
+    const chunks = await searchChunks(lastMessage);
+    const bestScore = chunks[0]?.similarity || 0;
+
+    let context = '';
+    let source = 'database';
+
+    if (bestScore >= SIMILARITY_THRESHOLD) {
+      // Good match found in database
+      context = chunks
+        .map(c => `[Source: ${c.url}]\n${c.content}`)
+        .join('\n\n');
+      console.log(`DB match (${bestScore.toFixed(2)}): "${lastMessage.slice(0, 50)}"`);
+    } else {
+      // No good match — fall back to live web search
+      console.log(`Low similarity (${bestScore.toFixed(2)}) — using web search for: "${lastMessage.slice(0, 50)}"`);
+      context = await webSearchFallback(lastMessage);
+      source = 'web search';
+    }
+
     const response = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      system: `${SYSTEM_PROMPT}\n\nCSUCI WEBSITE CONTENT:\n${siteContext}`,
+      max_tokens: 300,
+      system: `${SYSTEM_PROMPT}\n\nCSUCI CONTEXT (from ${source}):\n${context}`,
       messages,
     });
+
     res.json({ reply: response.content[0].text });
+
   } catch (err) {
-    console.error('API error:', err);
+    console.error('Error:', err.message);
     res.status(500).json({ error: 'EkhoBot hit a wave — try again!' });
   }
 });
 
 app.get('/health', (req, res) => {
-  res.json({
-    status: crawlComplete ? 'ready' : 'crawling',
-    pages: crawlComplete ? 'loaded' : 'loading'
-  });
+  res.json({ status: 'ready' });
 });
 
 app.listen(3000, () => console.log('EkhoBot backend running at http://localhost:3000'));

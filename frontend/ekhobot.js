@@ -65,7 +65,7 @@ style.textContent = `
 
   .ekho-header-text { flex: 1; }
   .ekho-header-title {
-    font-family: 'Libre Baskerville', serif; font-size: 13px; font-weight: 700;
+    font-family: 'Libre Baskerville', serif; font-size: 15px; font-weight: 700;
     color: #fff; letter-spacing: 0.01em; margin: 0;
   }
   .ekho-header-sub {
@@ -94,8 +94,8 @@ style.textContent = `
   }
 
   .ekho-msg {
-    max-width: 80%; padding: 8px 12px;
-    font-size: 12.5px; line-height: 1.5; border-radius: 14px;
+    max-width: 80%; padding: 9px 13px;
+    font-size: 14.5px; line-height: 1.55; border-radius: 14px;
   }
   .ekho-msg.bot {
     background: #fff; color: #1a1a1a;
@@ -107,7 +107,7 @@ style.textContent = `
   }
   .ekho-msg.hint {
     background: transparent; color: #B0B0B0;
-    border: none; font-size: 11px; font-style: italic; padding: 1px 3px;
+    border: none; font-size: 12.5px; font-style: italic; padding: 1px 3px;
   }
   .ekho-msg.coming-soon {
     background: #fff8e6; color: #92610a;
@@ -124,7 +124,7 @@ style.textContent = `
   }
 
   .ekho-chip {
-    font-size: 10px; padding: 5px 3px; border-radius: 20px;
+    font-size: 12px; padding: 5px 3px; border-radius: 20px;
     border: 1.5px solid #C8102E; color: #C8102E;
     background: #fff; cursor: pointer;
     font-family: 'Source Sans 3', sans-serif; font-weight: 600;
@@ -151,7 +151,7 @@ style.textContent = `
 
   #ekho-input {
     flex: 1; border: 1.5px solid #E8E9EA; border-radius: 20px;
-    padding: 7px 13px; font-size: 12.5px;
+    padding: 8px 14px; font-size: 14.5px;
     font-family: 'Source Sans 3', sans-serif;
     background: #F7F7F8; color: #1a1a1a; outline: none;
     transition: border-color 0.15s;
