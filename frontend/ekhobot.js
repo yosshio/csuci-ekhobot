@@ -2,28 +2,73 @@ const BACKEND_URL = 'http://localhost:3000/chat';
 let history = [];
 let currentTopic = 'root';
 let chipsExpanded = false;
+let chatInitialized = false;
 
 const style = document.createElement('style');
 style.textContent = `
   @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600&display=swap');
 
-  #ekho-bubble {
-    position: fixed; bottom: 20px; right: 20px; z-index: 9999;
-    width: 48px; height: 48px; border-radius: 50%;
-    background: #C8102E; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 14px rgba(200,16,46,0.35);
-    transition: background 0.15s, transform 0.15s, opacity 0.2s;
+  /* --- Launcher wrapper --- */
+  #ekho-launcher {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    display: flex; flex-direction: row; align-items: flex-end; gap: 10px;
+    transition: opacity 0.2s;
   }
-  #ekho-bubble:hover { background: #a00d24; transform: scale(1.05); }
-  #ekho-bubble.hidden { opacity: 0; pointer-events: none; }
+  #ekho-launcher.hidden { opacity: 0; pointer-events: none; }
 
+  /* --- Speech bubble tooltip --- */
+  #ekho-speech {
+    background: #fff;
+    color: #1a1a1a;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 18px 18px 18px 4px;
+    border: 1.5px solid #E8E9EA;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    white-space: nowrap;
+    cursor: pointer;
+    align-self: center;
+    position: relative;
+    animation: ekho-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transform-origin: center right;
+  }
+  #ekho-speech::after {
+    content: '';
+    position: absolute;
+    right: -9px; bottom: 12px;
+    width: 0; height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 9px solid #fff;
+  }
+  @keyframes ekho-pop {
+    0% { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* --- Main red circle bubble --- */
+  #ekho-bubble {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: #C8102E;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 18px rgba(200,16,46,0.40);
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.15s;
+    outline: none; padding: 0;
+    /* make it a plain div not button to avoid browser outline */
+  }
+  #ekho-bubble:hover { background: #a00d24; transform: scale(1.06); }
+
+  /* --- Chat Window --- */
   #ekho-window {
     position: fixed;
     bottom: 0; right: 0;
-    width: min(408px, 100vw);
-    height: min(595px, 100vh);
-    background: #ffffff;
+    width: min(420px, 100vw);
+    height: min(600px, 100vh);
+    background: #fff;
     border-radius: 14px 14px 0 0;
     border: 1px solid #E8E9EA;
     border-bottom: none;
@@ -36,9 +81,9 @@ style.textContent = `
 
   @media (min-width: 600px) {
     #ekho-window {
-      bottom: 20px; right: 20px;
-      width: min(391px, calc(100vw - 40px));
-      height: min(578px, calc(100vh - 40px));
+      bottom: 24px; right: 24px;
+      width: min(420px, calc(100vw - 48px));
+      height: min(600px, calc(100vh - 48px));
       border-radius: 14px;
       border-bottom: 1px solid #E8E9EA;
       box-shadow: 0 8px 36px rgba(0,0,0,0.13);
@@ -47,84 +92,125 @@ style.textContent = `
 
   @media (min-width: 900px) {
     #ekho-window {
-      width: min(442px, calc(100vw - 40px));
-      height: min(612px, calc(100vh - 40px));
+      width: min(450px, calc(100vw - 48px));
+      height: min(630px, calc(100vh - 48px));
     }
   }
 
+  #ekho-alert {
+    background: #C8102E;
+    color: #fff;
+    font-size: 12px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 600;
+    padding: 8px 14px;
+    text-align: center;
+    display: none;
+    flex-shrink: 0;
+    border-bottom: 1px solid #a00d24;
+    animation: ekho-pulse 2s infinite;
+  }
+  @keyframes ekho-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  /* --- Header --- */
   #ekho-header {
-    background: #C8102E; padding: 0 15px; height: 46px;
-    display: flex; align-items: center; gap: 9px;
+    background: #C8102E;
+    padding: 0 18px; height: 58px;
+    display: flex; align-items: center; gap: 11px;
     border-bottom: 2px solid #a00d24; flex-shrink: 0;
   }
 
   .ekho-logo {
-    width: 29px; height: 29px; border-radius: 50%; background: #fff;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #fff;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
 
   .ekho-header-text { flex: 1; }
   .ekho-header-title {
-    font-family: 'Libre Baskerville', serif; font-size: 15px; font-weight: 700;
+    font-family: 'Libre Baskerville', serif;
+    font-size: 16px; font-weight: 700;
     color: #fff; letter-spacing: 0.01em; margin: 0;
   }
   .ekho-header-sub {
-    font-size: 9px; color: rgba(255,255,255,0.65); margin: 1px 0 0;
-    letter-spacing: 0.03em; text-transform: uppercase; font-weight: 500;
+    font-size: 11px; color: rgba(255,255,255,0.65);
+    margin: 2px 0 0; letter-spacing: 0.03em;
+    text-transform: uppercase; font-weight: 500;
   }
 
   #ekho-close {
     background: none; border: none; cursor: pointer;
-    color: rgba(255,255,255,0.7); font-size: 15px; padding: 4px; line-height: 1;
+    color: rgba(255,255,255,0.7); font-size: 18px;
+    padding: 4px; line-height: 1;
   }
   #ekho-close:hover { color: #fff; }
 
+  /* --- Messages --- */
   #ekho-messages {
-    flex: 1; overflow-y: auto; padding: 12px;
-    display: flex; flex-direction: column; gap: 9px;
-    background: #F7F7F8; scrollbar-width: thin; scrollbar-color: #E8E9EA transparent;
+    flex: 1;
+    overflow-y: auto;
+    padding: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;  
+    background: #F7F7F8;
+    scrollbar-width: thin;
+    scrollbar-color: #E8E9EA transparent;
+    min-height: 0;
+  }
+  #ekho-messages::before {
+    content: '';
+    flex: 1;
   }
 
   .ekho-row { display: flex; align-items: flex-end; gap: 6px; padding: 0 2px; }
   .ekho-row.user { flex-direction: row-reverse; padding: 0; }
 
   .ekho-avatar {
-    width: 24px; height: 24px; border-radius: 50%; background: #C8102E;
-    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #C8102E; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
   }
 
   .ekho-msg {
     max-width: 80%; padding: 9px 13px;
-    font-size: 14.5px; line-height: 1.55; border-radius: 14px;
+    font-size: 14px; line-height: 1.55; border-radius: 14px;
   }
   .ekho-msg.bot {
     background: #fff; color: #1a1a1a;
-    border: 1px solid #E8E9EA; border-bottom-left-radius: 3px;
+    border: 1px solid #E8E9EA;
+    border-bottom-left-radius: 3px;
   }
   .ekho-msg.user {
     background: #C8102E; color: #fff;
     border-bottom-right-radius: 3px; margin-right: 0;
   }
   .ekho-msg.hint {
-    background: transparent; color: #B0B0B0;
-    border: none; font-size: 12.5px; font-style: italic; padding: 1px 3px;
+    background: transparent; color: #A7A9AC;
+    border: none; font-size: 12px;
+    font-style: italic; padding: 1px 3px;
   }
   .ekho-msg.coming-soon {
-    background: #fff8e6; color: #92610a;
-    border: 1px solid #f5d97a; border-bottom-left-radius: 3px; font-size: 12px;
+    background: #f9f9f9; color: #6b6d6f;
+    border: 1px solid #E8E9EA;
+    border-bottom-left-radius: 3px; font-size: 13px;
   }
 
+  /* --- Chip bar --- */
   #ekho-chip-bar {
-    padding: 6px 10px; background: #fff;
-    border-top: 1px solid #F0F0F0;
+    padding: 6px 8px; background: #fff;
+    border-top: 1px solid #E8E9EA;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+    gap: 3px;
     flex-shrink: 0;
   }
 
   .ekho-chip {
-    font-size: 12px; padding: 5px 3px; border-radius: 20px;
+    font-size: 11px; padding: 5px 2px; border-radius: 20px;
     border: 1.5px solid #C8102E; color: #C8102E;
     background: #fff; cursor: pointer;
     font-family: 'Source Sans 3', sans-serif; font-weight: 600;
@@ -139,34 +225,36 @@ style.textContent = `
   .ekho-chip.secondary:hover { background: #A7A9AC; color: #fff; border-color: #A7A9AC; }
 
   .ekho-chip.future {
-    border-color: #C8A000; color: #92610a; background: #fffbf0;
+    border-color: #A7A9AC; color: #A7A9AC; background: #F7F7F8;
   }
-  .ekho-chip.future:hover { background: #C8A000; color: #fff; border-color: #C8A000; }
+  .ekho-chip.future:hover { background: #A7A9AC; color: #fff; border-color: #A7A9AC; }
 
+  /* --- Input area --- */
   #ekho-input-area {
-    padding: 8px 11px; background: #fff;
-    display: flex; gap: 7px; align-items: center;
+    padding: 9px 12px; background: #fff;
+    display: flex; gap: 8px; align-items: center;
     border-top: 1px solid #E8E9EA; flex-shrink: 0;
   }
 
   #ekho-input {
     flex: 1; border: 1.5px solid #E8E9EA; border-radius: 20px;
-    padding: 8px 14px; font-size: 14.5px;
+    padding: 9px 15px; font-size: 14px;
     font-family: 'Source Sans 3', sans-serif;
     background: #F7F7F8; color: #1a1a1a; outline: none;
     transition: border-color 0.15s;
   }
   #ekho-input:focus { border-color: #C8102E; background: #fff; }
-  #ekho-input::placeholder { color: #B0B0B0; }
+  #ekho-input::placeholder { color: #A7A9AC; }
 
   #ekho-send {
-    width: 31px; height: 31px; border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: #C8102E; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; transition: background 0.15s;
   }
   #ekho-send:hover { background: #a00d24; }
 
+  /* --- Typing --- */
   .ekho-typing {
     display: flex; gap: 3px; align-items: center;
     padding: 9px 13px; background: #fff;
@@ -183,29 +271,29 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-const dolphinWhite = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const dolphinRed = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const dolphinWhite = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const dolphinRed = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const dolphinBubble = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-// 4 cols x 2 rows = 8 slots. First 6 = topic chips, slot 7 = More, slot 8 = Back/empty
 const CHIP_SETS = {
   root: [
-    { label: 'Admissions',    prompt: 'Tell me about admissions at CSUCI',                  topic: 'admissions' },
-    { label: 'Financial Aid', prompt: 'What financial aid is available at CSUCI?',           topic: 'financialaid' },
-    { label: 'Advising',      prompt: 'Tell me about academic advising at CSUCI',            topic: 'advising' },
-    { label: 'Counseling',    prompt: 'What counseling services does CSUCI offer?',          topic: 'counseling' },
-    { label: 'Housing',       prompt: 'Tell me about student housing at CSUCI',              topic: 'housing' },
-    { label: 'Programs',      prompt: 'What academic programs does CSUCI offer?',            topic: 'programs' },
-    { label: 'Events',        prompt: 'What events are happening on campus?',               topic: 'events' },
-    { label: 'Services',      prompt: 'What student services are available at CSUCI?',      topic: 'services' },
-    { label: 'Departments',   prompt: 'I need to contact a CSUCI department.',              topic: 'departments' },
-    { label: 'Parking',       prompt: 'Tell me about parking at CSUCI',                     topic: 'parking' },
-    { label: 'Calendar',      future: true },
-    { label: 'Appointment',   future: true },
-    { label: 'Tuition',       prompt: 'How much does it cost to attend CSUCI?',             topic: 'financialaid' },
-    { label: 'Library',       prompt: 'How do I access the CSUCI library?',                 topic: 'services' },
-    { label: 'Campus Map',    prompt: 'Where can I find a campus map for CSUCI?',           topic: 'parking' },
-    { label: 'Health',        prompt: 'How do I contact CSUCI Student Health Services?',    topic: 'departments' },
-  ],
+  { label: 'Admissions',    prompt: 'Tell me about admissions at CSUCI',                  topic: 'admissions' },
+  { label: 'Financial Aid', prompt: 'What financial aid is available at CSUCI?',           topic: 'financialaid' },
+  { label: 'Advising',      prompt: 'Tell me about academic advising at CSUCI',            topic: 'advising' },
+  { label: 'Counseling',    prompt: 'What counseling services does CSUCI offer?',          topic: 'counseling' },
+  { label: 'Housing',       prompt: 'Tell me about student housing at CSUCI',              topic: 'housing' },
+  { label: 'Programs',      prompt: 'What academic programs does CSUCI offer?',            topic: 'programs' },
+  { label: 'Events',        prompt: 'What events are happening on campus?',               topic: 'events' },
+  { label: 'Services',      prompt: 'What student services are available at CSUCI?',      topic: 'services' },
+  { label: 'Departments',   prompt: 'I need to contact a CSUCI department.',              topic: 'departments' },
+  { label: 'Parking',       prompt: 'Tell me about parking at CSUCI',                     topic: 'parking' },
+  { label: 'Campus Police', prompt: 'How do I contact CSUCI Campus Police or Public Safety?', topic: 'departments' },
+  { label: 'Transit',       prompt: 'What transportation and shuttle options are available at CSUCI?', topic: 'parking' },
+  { label: 'Tuition',       prompt: 'How much does it cost to attend CSUCI?',             topic: 'financialaid' },
+  { label: 'Library',       prompt: 'How do I access the CSUCI library?',                 topic: 'services' },
+  { label: 'Appointment',   future: true },
+  { label: 'Calendar',      future: true },
+],
   advising: [
     { label: 'Meet Advisor',  prompt: 'How do I meet with an academic advisor at CSUCI?',          topic: 'advising' },
     { label: 'Degree Plan',   prompt: 'How do I plan my degree at CSUCI?',                          topic: 'advising' },
@@ -220,7 +308,7 @@ const CHIP_SETS = {
     { label: 'Leave Absence', prompt: 'How do I take a leave of absence from CSUCI?',              topic: 'advising' },
     { label: 'Appointment',   future: true },
     { label: 'Waitlist',      prompt: 'How does the class waitlist work at CSUCI?',                 topic: 'advising' },
-    { label: 'Units Required',prompt: 'How many units do I need to graduate from CSUCI?',           topic: 'advising' },
+    { label: 'Units Req.',    prompt: 'How many units do I need to graduate from CSUCI?',           topic: 'advising' },
     { label: 'Double Major',  prompt: 'Can I double major at CSUCI?',                               topic: 'advising' },
     { label: 'Honors',        prompt: 'What honors programs are available at CSUCI?',               topic: 'advising' },
   ],
@@ -254,9 +342,9 @@ const CHIP_SETS = {
     { label: 'High School',   prompt: 'Does CSUCI have programs for high school students?',topic: 'admissions' },
     { label: 'Early Decision',prompt: 'Does CSUCI offer early decision?',                  topic: 'admissions' },
     { label: 'GPA Required',  prompt: 'What GPA do I need to get into CSUCI?',             topic: 'admissions' },
-    { label: 'Impacted Majors',prompt: 'What are the impacted majors at CSUCI?',           topic: 'admissions' },
+    { label: 'Impacted',      prompt: 'What are the impacted majors at CSUCI?',            topic: 'admissions' },
     { label: 'SAT/ACT',       prompt: 'Does CSUCI require SAT or ACT scores?',             topic: 'admissions' },
-    { label: 'Acceptance Rate',prompt: 'What is the acceptance rate at CSUCI?',            topic: 'admissions' },
+    { label: 'Acceptance',    prompt: 'What is the acceptance rate at CSUCI?',             topic: 'admissions' },
     { label: 'Contact',       prompt: 'How do I contact the CSUCI Admissions Office?',     topic: 'admissions' },
     { label: 'Orientation',   prompt: 'When is new student orientation at CSUCI?',         topic: 'admissions' },
   ],
@@ -273,10 +361,10 @@ const CHIP_SETS = {
     { label: 'Disbursement',  prompt: 'When is financial aid disbursed at CSUCI?',         topic: 'financialaid' },
     { label: 'SAP Policy',    prompt: 'What is the SAP policy for financial aid at CSUCI?',topic: 'financialaid' },
     { label: 'Pell Grant',    prompt: 'How do I qualify for a Pell Grant at CSUCI?',       topic: 'financialaid' },
-    { label: 'EFC',           prompt: 'What is EFC and how does it affect my aid at CSUCI?',topic: 'financialaid' },
     { label: 'Contact',       prompt: 'How do I contact CSUCI Financial Aid Office?',      topic: 'financialaid' },
     { label: 'Summer Aid',    prompt: 'Is financial aid available for summer at CSUCI?',   topic: 'financialaid' },
     { label: 'Verification',  prompt: 'What is financial aid verification at CSUCI?',      topic: 'financialaid' },
+    { label: 'EFC',           prompt: 'What is EFC and how does it affect my aid?',        topic: 'financialaid' },
   ],
   events: [
     { label: 'Calendar',      future: true },
@@ -291,8 +379,8 @@ const CHIP_SETS = {
     { label: 'Greek Life',    prompt: 'Does CSUCI have fraternities or sororities?',       topic: 'events' },
     { label: 'Intramurals',   prompt: 'Does CSUCI have intramural sports?',                topic: 'events' },
     { label: 'Student Govt',  prompt: 'How does student government work at CSUCI?',        topic: 'events' },
-    { label: 'Fitness',       prompt: 'What fitness and recreation facilities does CSUCI have?', topic: 'events' },
-    { label: 'Art & Music',   prompt: 'What arts and music programs or events does CSUCI offer?', topic: 'events' },
+    { label: 'Fitness',       prompt: 'What fitness facilities does CSUCI have?',          topic: 'events' },
+    { label: 'Art & Music',   prompt: 'What arts and music events does CSUCI offer?',      topic: 'events' },
     { label: 'Community Svc', prompt: 'What community service opportunities exist at CSUCI?', topic: 'events' },
     { label: 'Networking',    prompt: 'What networking events does CSUCI host?',           topic: 'events' },
   ],
@@ -329,7 +417,7 @@ const CHIP_SETS = {
     { label: 'Psychology',    prompt: 'What psychology programs does CSUCI offer?',            topic: 'programs' },
     { label: 'Pre-Med',       prompt: 'Does CSUCI have a pre-med track?',                      topic: 'programs' },
     { label: 'Study Abroad',  prompt: 'What study abroad programs does CSUCI offer?',          topic: 'programs' },
-    { label: 'Research',      prompt: 'What research opportunities exist for students at CSUCI?', topic: 'programs' },
+    { label: 'Research',      prompt: 'What research opportunities exist at CSUCI?',           topic: 'programs' },
     { label: 'Class Schedule',prompt: 'How do I find the class schedule at CSUCI?',            topic: 'programs' },
   ],
   departments: [
@@ -345,10 +433,10 @@ const CHIP_SETS = {
     { label: 'Career Ctr',    prompt: 'How do I contact the CSUCI Career Center?',                     topic: 'departments' },
     { label: 'Counseling',    prompt: 'How do I contact CSUCI Student Counseling?',                    topic: 'departments' },
     { label: 'Disability',    prompt: 'How do I contact CSUCI Disability Services?',                   topic: 'departments' },
-    { label: 'President',     prompt: 'Who is the president of CSUCI and how do I contact them?',      topic: 'departments' },
+    { label: 'President',     prompt: 'Who is the president of CSUCI?',                                topic: 'departments' },
     { label: 'Parking Svcs',  prompt: 'How do I contact CSUCI Parking Services?',                     topic: 'departments' },
-    { label: 'Cashier',       prompt: 'How do I contact the CSUCI Student Business Services?',         topic: 'departments' },
     { label: 'Dean Office',   prompt: 'How do I contact the Dean of Students at CSUCI?',              topic: 'departments' },
+    { label: 'Cashier',       prompt: 'How do I contact CSUCI Student Business Services?',            topic: 'departments' },
   ],
   parking: [
     { label: 'Buy Permit',    prompt: 'How do I buy a parking permit at CSUCI?',           topic: 'parking' },
@@ -361,7 +449,7 @@ const CHIP_SETS = {
     { label: 'Shuttle',       prompt: 'Does CSUCI offer a shuttle service?',              topic: 'parking' },
     { label: 'After Hours',   prompt: 'What are parking rules after hours at CSUCI?',     topic: 'parking' },
     { label: 'Carpool',       prompt: 'Does CSUCI offer carpool programs?',               topic: 'parking' },
-    { label: 'Motorcycle',    prompt: 'Where can motorcycles park at CSUCI?',             topic: 'parking' },
+    { label: 'Daily Permit',  prompt: 'How do I buy a daily parking permit at CSUCI?',    topic: 'parking' },
     { label: 'Overnight',     prompt: 'Is overnight parking allowed at CSUCI?',           topic: 'parking' },
     { label: 'Lot Map',       prompt: 'Where can I find a parking lot map for CSUCI?',    topic: 'parking' },
     { label: 'Cost',          prompt: 'How much does a parking permit cost at CSUCI?',    topic: 'parking' },
@@ -383,30 +471,45 @@ const CHIP_SETS = {
     { label: 'Math Help',     prompt: 'Does CSUCI have a math tutoring center?',                     topic: 'services' },
     { label: 'Tech Support',  prompt: 'How do I get tech support as a student at CSUCI?',            topic: 'services' },
     { label: 'Printing',      prompt: 'Where can I print on campus at CSUCI?',                       topic: 'services' },
-    { label: 'Child Care',    prompt: 'Does CSUCI offer child care services for student parents?',   topic: 'services' },
+    { label: 'Child Care',    prompt: 'Does CSUCI offer child care for student parents?',            topic: 'services' },
     { label: 'Lost & Found',  prompt: 'Where is the lost and found at CSUCI?',                       topic: 'services' },
   ],
 };
 
 function detectChipSet(t) {
   t = t.toLowerCase();
-  if (t.match(/advis|degree plan|change major|graduation req|add.drop|transfer credit|waitlist|gpa|units/)) return 'advising';
-  if (t.match(/counsel|mental health|anxiety|stress|therapy|wellness|crisis/))                              return 'counseling';
-  if (t.match(/admission|apply|application|transfer|enrollment|freshman|acceptance/))                       return 'admissions';
-  if (t.match(/financial aid|fafsa|scholarship|grant|work.study|loan|tuition|fee|pell/))                   return 'financialaid';
-  if (t.match(/event|calendar|orientation|club|activity|sport|commencement|intramural/))                   return 'events';
-  if (t.match(/hous|dorm|resident|apartment|meal plan|dining/))                                             return 'housing';
-  if (t.match(/major|program|degree|minor|certificate|graduate|undergrad|nursing|cs|stem/))                return 'programs';
-  if (t.match(/contact|phone|email|office hours|registrar|it help|campus police|dean/))                   return 'departments';
-  if (t.match(/park|permit|map|lot|visitor|ada|shuttle|ev charging|carpool/))                              return 'parking';
-  if (t.match(/tutor|writing|disabilit|food|pantry|career|library|veteran|lgbtq|printing/))               return 'services';
+  if (t.match(/advis|degree plan|change major|graduation req|add.drop|transfer credit|waitlist|units/)) return 'advising';
+  if (t.match(/counsel|mental health|anxiety|stress|therapy|wellness|crisis/))                          return 'counseling';
+  if (t.match(/admission|apply|application|transfer|enrollment|freshman|acceptance/))                   return 'admissions';
+  if (t.match(/financial aid|fafsa|scholarship|grant|work.study|loan|tuition|fee|pell/))               return 'financialaid';
+  if (t.match(/event|calendar|orientation|club|activity|sport|commencement|intramural/))               return 'events';
+  if (t.match(/hous|dorm|resident|apartment|meal plan|dining/))                                         return 'housing';
+  if (t.match(/major|program|degree|minor|certificate|graduate|undergrad|nursing|cs|stem/))            return 'programs';
+  if (t.match(/contact|phone|email|office hours|registrar|it help|campus police|dean/))               return 'departments';
+  if (t.match(/park|permit|map|lot|visitor|ada|shuttle|ev charging|carpool/))                          return 'parking';
+  if (t.match(/tutor|writing|disabilit|food|pantry|career|library|veteran|lgbtq|printing/))           return 'services';
   return 'root';
 }
 
-const bubble = document.createElement('button');
+// --- Build DOM ---
+const launcher = document.createElement('div');
+launcher.id = 'ekho-launcher';
+
+// Speech bubble — appears above the circle
+const speech = document.createElement('div');
+speech.id = 'ekho-speech';
+speech.textContent = 'Need some help? 🐬';
+speech.onclick = openChat;
+
+// Red circle bubble
+const bubble = document.createElement('div');
 bubble.id = 'ekho-bubble';
 bubble.title = 'Chat with EkhoBot';
-bubble.innerHTML = dolphinWhite;
+bubble.innerHTML = dolphinBubble;
+bubble.onclick = openChat;
+
+launcher.appendChild(speech);
+launcher.appendChild(bubble);
 
 const win = document.createElement('div');
 win.id = 'ekho-window';
@@ -419,25 +522,27 @@ win.innerHTML = `
     </div>
     <button id="ekho-close">&#x2715;</button>
   </div>
+  <div id="ekho-alert"></div>
   <div id="ekho-messages"></div>
   <div id="ekho-chip-bar"></div>
   <div id="ekho-input-area">
     <input id="ekho-input" type="text" placeholder="Ask EkhoBot anything..." />
     <button id="ekho-send">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
     </button>
   </div>
 `;
 
-document.body.appendChild(bubble);
+document.body.appendChild(launcher);
 document.body.appendChild(win);
 
 function openChat() {
   win.style.display = 'flex';
   win.style.flexDirection = 'column';
-  bubble.classList.add('hidden');
-  if (history.length === 0) {
-    addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with?");
+  launcher.classList.add('hidden');
+  if (!chatInitialized) {
+    chatInitialized = true;
+    addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?\n\nTambién puedo ayudarte en español.");
     addHint("Don't see your topic? Just type it below.");
     renderChips('root', false);
   }
@@ -445,15 +550,13 @@ function openChat() {
 
 function closeChat() {
   win.style.display = 'none';
-  bubble.classList.remove('hidden');
+  launcher.classList.remove('hidden');
 }
 
-bubble.onclick = openChat;
 document.getElementById('ekho-close').onclick = closeChat;
 document.getElementById('ekho-send').onclick = sendMessage;
 document.getElementById('ekho-input').onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
 
-// 4 cols x 2 rows = 8 slots. Show 6 chips + More + Back/empty
 function renderChips(topicKey, expanded) {
   currentTopic = topicKey;
   chipsExpanded = expanded;
@@ -527,7 +630,69 @@ function addBotMessage(text) {
   avatar.innerHTML = dolphinWhite;
   const msg = document.createElement('div');
   msg.className = 'ekho-msg bot';
-  msg.textContent = text;
+
+  const socialMap = {
+    '@csuci':              'https://www.instagram.com/csuci',
+    'instagram: @csuci':   'https://www.instagram.com/csuci',
+    'twitter/x: @csuci':   'https://twitter.com/csuci',
+    'twitter: @csuci':     'https://twitter.com/csuci',
+    'facebook: csu channel islands': 'https://www.facebook.com/CSUChannelIslands',
+    'youtube: youtube.com/user/ciwatch': 'https://www.youtube.com/user/ciwatch',
+    'pinterest: @csuci':   'https://www.pinterest.com/csuci',
+  };
+
+  text.split('\n').forEach((line, i) => {
+    if (i > 0) msg.appendChild(document.createElement('br'));
+
+    const lineLower = line.toLowerCase().trim();
+
+    // Check if this line is a social media line
+    let matched = false;
+    for (const [key, url] of Object.entries(socialMap)) {
+      if (lineLower.includes(key)) {
+        // Split into label and handle
+        const colonIdx = line.indexOf(':');
+        if (colonIdx !== -1) {
+          const label = line.slice(0, colonIdx + 1) + ' ';
+          const handle = line.slice(colonIdx + 1).trim();
+          msg.appendChild(document.createTextNode(label));
+          const a = document.createElement('a');
+          a.href = url;
+          a.textContent = handle;
+          a.target = '_blank';
+          a.style.cssText = 'color:#C8102E;font-weight:600;text-decoration:none;';
+          a.onmouseover = () => a.style.textDecoration = 'underline';
+          a.onmouseout = () => a.style.textDecoration = 'none';
+          msg.appendChild(a);
+          matched = true;
+          break;
+        }
+      }
+    }
+
+    if (!matched) {
+      // Auto-link URLs
+      if (line.match(/https?:\/\/|www\.|csuci\.edu/i)) {
+        const parts = line.split(/((?:https?:\/\/|www\.)\S+|csuci\.edu\S*)/gi);
+        parts.forEach(part => {
+          if (part.match(/https?:\/\/|www\.|csuci\.edu/i)) {
+            const a = document.createElement('a');
+            const href = part.startsWith('http') ? part : 'https://' + part;
+            a.href = href;
+            a.textContent = part;
+            a.target = '_blank';
+            a.style.cssText = 'color:#C8102E;text-decoration:underline;word-break:break-all;';
+            msg.appendChild(a);
+          } else {
+            msg.appendChild(document.createTextNode(part));
+          }
+        });
+      } else {
+        msg.appendChild(document.createTextNode(line));
+      }
+    }
+  });
+
   row.appendChild(avatar);
   row.appendChild(msg);
   msgs.appendChild(row);
