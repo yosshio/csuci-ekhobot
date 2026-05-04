@@ -16,8 +16,6 @@ Endpoints:
   GET  /alert        - Get current alert message
   POST /alert        - Set alert message (requires key)
   GET  /health       - Health check
-
-Port: 3000
 ================================================================================
 */
 
@@ -66,7 +64,7 @@ CONFIGURATION
 */
 
 // Minimum similarity score to use database results (0.0 to 1.0)
-// Below this threshold, fallback to web search
+// Below threshold will fallback to web search
 const SIMILARITY_THRESHOLD = 0.15;
 
 // Number of database chunks to retrieve for context
@@ -139,7 +137,7 @@ async function loadEmbedder() {
 
 /*
 FUNCTION: getEmbedding
-PURPOSE: Convert text into 384-dimensional vector
+PURPOSE: Convert text into 384 dimensional vector
 PARAMETERS: text (string)
 RETURNS: Array of 384 numbers
 */
@@ -155,7 +153,7 @@ async function getEmbedding(text) {
   return Array.from(output.data);
 }
 
-// Pre-load model on startup to avoid first-request delay
+// Pre load model on startup to avoid first request delay
 loadEmbedder();
 
 /*
@@ -180,7 +178,7 @@ async function searchChunks(query) {
   const lowerQuery = query.toLowerCase();
 
   /*
-  Query enrichment: Add context-specific prefixes to improve matching
+  Query enrichment: Add context specific prefixes to improve matching
   This helps the embedding model understand the domain of the question
   */
   let enrichedQuery = query;
@@ -250,7 +248,7 @@ async function webSearchFallback(query) {
   }
   
   try {
-    // Search for "CSUCI [query]" to get campus-specific results
+    // Search for "CSUCI [query]" to get campus specific results
     const res = await fetch(
       `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent('CSUCI ' + query)}&count=3`,
       { headers: { 'X-Subscription-Token': process.env.BRAVE_SEARCH_KEY } }
@@ -334,7 +332,7 @@ CRITICAL CSUCI FACTS — always use these when relevant:
 ================================================================================
 ALERT SYSTEM
 ================================================================================
-Allows administrators to set campus-wide alerts (power outages, closures, etc)
+Allows administrators to set campus wide alerts (power outages, closures, lion sightings???, etc)
 */
 
 let currentAlert = '';
@@ -408,7 +406,7 @@ app.post('/chat', async (req, res) => {
     */
     if (bestScore >= SIMILARITY_THRESHOLD) {
       /*
-      Filter out low-quality chunks:
+      Filter out low quality chunks:
       - Spanish OCR artifacts (Descargue, Escanee)
       - Google Tag Manager code
       - iframes and embedded content
@@ -434,7 +432,7 @@ app.post('/chat', async (req, res) => {
       console.log(`DB match (${bestScore.toFixed(2)}): "${lastMessage.slice(0, 50)}"`);
       
     } else {
-      // Low similarity - use web search instead
+      // Low similarity -> use web search instead
       console.log(`Low similarity (${bestScore.toFixed(2)}) — using web search for: "${lastMessage.slice(0, 50)}"`);
       context = await webSearchFallback(lastMessage);
       source = 'web search';

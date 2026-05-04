@@ -5,11 +5,11 @@ EKHOBOT WEB CRAWLER AND INDEXER
 Crawls CSUCI website, extracts text, generates embeddings, stores in database.
 
 Process:
-  1. Fetch URLs from sitemap.xml
-  2. Visit each page and extract clean text
-  3. Split text into 800-character chunks
-  4. Generate vector embeddings for each chunk
-  5. Save to PostgreSQL database with pgvector
+  - Fetch URLs from sitemap.xml
+  - Visit each page and extract clean text
+  - Split text into 800-character chunks
+  - Generate vector embeddings for each chunk
+  - Save to PostgreSQL database with pgvector
 
 Run: node scripts/index.js
 ================================================================================
@@ -33,7 +33,7 @@ await db.connect();
 ================================================================================
 EMBEDDING MODEL
 ================================================================================
-Local AI model for text-to-vector conversion (no API key needed)
+Local AI model for text to vector conversion
 */
 let embedder = null;
 
@@ -60,7 +60,7 @@ SITEMAP FETCHING
 /*
 FUNCTION: getSitemapUrls
 PURPOSE: Download and parse all URLs from CSUCI sitemap
-RETURNS: Array of clean URLs ready to crawl
+RETURNS: Array of cleaned URLs ready to crawl
 */
 async function getSitemapUrls() {
   try {
@@ -68,7 +68,7 @@ async function getSitemapUrls() {
     const res = await fetch('https://www.csuci.edu/sitemap.xml');
     const xml = await res.text();
     
-    // Extract all <loc>URL</loc> tags
+    // Extract all <loc>URL</loc> tags from html
     const matches = xml.match(/<loc>(.*?)<\/loc>/g) || [];
     
     const urls = matches
@@ -96,17 +96,17 @@ EMBEDDING GENERATION
 
 /*
 FUNCTION: getEmbedding
-PURPOSE: Convert text into 384-dimensional vector
+PURPOSE: Convert text into 384 dimension vector
 PARAMETERS: text (string)
 RETURNS: Array of 384 numbers
 */
 async function getEmbedding(text) {
   const model = await loadEmbedder();
   
-  // Limit to 8000 chars to avoid model limits
+  // Limit of 8000 chars to avoid model limits
   const output = await model(text.slice(0, 8000), {
     pooling: 'mean',      // Average token embeddings
-    normalize: true       // Normalize for cosine similarity
+    normalize: true       // Normalize for similarity
   });
   
   return Array.from(output.data);
@@ -120,7 +120,7 @@ TEXT PROCESSING
 
 /*
 FUNCTION: chunkText
-PURPOSE: Split long text into 800-char chunks for better embeddings
+PURPOSE: Split long text into 800 char chunks for better embeddings
 PARAMETERS: text (string), size (number, default 800)
 RETURNS: Array of text chunks
 */
@@ -175,7 +175,7 @@ async function extractPdf(url) {
     });
     const buffer = await res.arrayBuffer();
 
-    // Silence pdf-parse library console noise
+    // Silence pdf parse library console noise
     const origLog = console.log;
     const origInfo = console.info;
     const origWarn = console.warn;
@@ -195,7 +195,7 @@ async function extractPdf(url) {
 
     const text = data.text.replace(/\s+/g, ' ').trim();
     
-    // Reject PDFs with minimal text (likely image-only)
+    // Reject PDFs with minimal text (likely to be image only)
     if (text.length < 50) return null;
 
     console.log(`  PDF read: ${text.length} chars from ${url.split('/').pop()}`);
@@ -236,7 +236,7 @@ PROCESS:
 async function crawl() {
   // Track visited and queued URLs
   const visited = new Set();
-  const queued = new Set();  // FIXED: Use Set instead of array.includes() for O(1) lookups
+  const queued = new Set();  // Set instead of array.includes() for O(1) lookup
   
   // Get initial URLs from sitemap
   const sitemapUrls = await getSitemapUrls();
@@ -284,7 +284,7 @@ async function crawl() {
           }
           
           console.log(`[${pageCount}] PDF — ${chunks.length} chunks saved`);
-          console.log(`  URL: ${url}`);  // FIXED: Show actual URL being crawled
+          console.log(`  URL: ${url}`);  // Show URL being crawled
         }
         
         continue;
@@ -311,7 +311,7 @@ async function crawl() {
       const $ = cheerio.load(html);
       const title = $('title').text().trim() || url;
 
-      // Remove navigation and non-content elements
+      // Remove navigation and non content elements
       $('nav, footer, script, style, header, .menu, .navigation, .breadcrumb, .sidebar, .cookie-notice, .alert, .banner').remove();
 
       // Extract main content
@@ -321,7 +321,7 @@ async function crawl() {
         .replace(/\s+/g, ' ')
         .trim();
 
-      // Skip pages with minimal content
+      // Skip pages with very little content
       if (text.length < 100) {
         console.log(`[${pageCount}] Too short, skipped: ${url}`);
         continue;
@@ -336,7 +336,7 @@ async function crawl() {
       }
 
       console.log(`[${pageCount}] ${chunks.length} chunks — ${title.slice(0, 50)}`);
-      console.log(`  URL: ${url}`);  // FIXED: Show actual URL being crawled
+      console.log(`  URL: ${url}`);  // Show URL being crawled
 
       /*
       ================================================================
@@ -357,7 +357,6 @@ async function crawl() {
 
         if (!fullUrl) return;
 
-        // FIXED: Use Set for O(1) lookup instead of array.includes()
         const notVisited = !visited.has(fullUrl) && !queued.has(fullUrl);
         const notJunk = !fullUrl.match(/\.(jpg|jpeg|png|gif|svg|zip|mp4|mp3|css|js|ico|webp)$/i);
         const notAuth = !fullUrl.match(/login|logout|signin|signout|sso|cas/i);
@@ -372,11 +371,11 @@ async function crawl() {
             queue.push(fullUrl);     // End of queue
           }
           
-          queued.add(fullUrl);  // FIXED: Track in Set
+          queued.add(fullUrl);  // Track in Set
         }
       });
 
-      // Wait 300ms between requests (polite to server)
+      // Wait 300ms between requests
       await new Promise(r => setTimeout(r, 300));
 
     } catch (err) {
