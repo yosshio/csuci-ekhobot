@@ -426,11 +426,11 @@ SVG ICONS
 Official CSUCI Dolphins logo - local file
 */
 
-const DOLPHIN_LOGO = 'images/ci-dolphin-logo.avif';
+const DOLPHIN_LOGO = 'images/ci-dolphin-logo.png';
 
-const dolphinWhite = `<img src="${DOLPHIN_LOGO}" style="width:18px;height:18px;object-fit:contain;" alt="Dolphin">`;
-const dolphinRed = `<img src="${DOLPHIN_LOGO}" style="width:20px;height:20px;object-fit:contain;" alt="Dolphin">`;
-const dolphinBubble = `<img src="${DOLPHIN_LOGO}" style="width:32px;height:32px;object-fit:contain;" alt="Dolphin">`;
+const dolphinWhite = `<img src="${DOLPHIN_LOGO}" style="width:26px;height:26px;object-fit:contain;" alt="Dolphin">`;
+const dolphinRed = `<img src="${DOLPHIN_LOGO}" style="width:30px;height:30px;object-fit:contain;" alt="Dolphin">`;
+const dolphinBubble = `<img src="${DOLPHIN_LOGO}" style="width:42px;height:42px;object-fit:contain;" alt="Dolphin">`;
 
 /*
 ================================================================================
