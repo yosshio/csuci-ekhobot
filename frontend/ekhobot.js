@@ -276,7 +276,7 @@ const CHIP_SETS = {
     { label: 'Tuition',       prompt: 'How much does it cost to attend CSUCI?',                 topic: 'financialaid' },
     { label: 'Library',       prompt: 'How do I access the CSUCI library?',                     topic: 'services' },
     { label: 'Appointment',   future: true },
-    { label: 'Calendar',      future: true },
+    { label: 'Español | 日本語', prompt: 'What languages does EkhoBot support?', topic: 'languages' }, 
   ],
   advising: [
     { label: 'Meet Advisor',  prompt: 'How do I meet with an academic advisor at CSUCI?',          topic: 'advising' },
@@ -458,6 +458,24 @@ const CHIP_SETS = {
     { label: 'Child Care',    prompt: 'Does CSUCI offer child care for student parents?',             topic: 'services' },
     { label: 'Lost & Found',  prompt: 'Where is the lost and found at CSUCI?',                        topic: 'services' },
   ],
+  languages: [
+    { label: 'Español',       prompt: 'Hola, por favor respóndeme en español de ahora en adelante.', topic: 'languages' },
+    { label: '日本語',          prompt: 'こんにちは、これからは日本語で答えてください。',                    topic: 'languages' },
+    { label: 'Français',      prompt: 'Bonjour, veuillez me répondre en français.',                  topic: 'languages' },
+    { label: 'Tagalog',       prompt: 'Kamusta, pakisagot sa akin sa Tagalog mula ngayon.',          topic: 'languages' },
+    { label: 'Português',     prompt: 'Olá, por favor responda-me em português.',                    topic: 'languages' },
+    { label: 'Mandarin',      prompt: '你好，请用普通话回答我。',                                          topic: 'languages' },
+    { label: 'Korean',        prompt: '안녕하세요, 앞으로 한국어로 대답해 주세요.',                          topic: 'languages' },
+    { label: 'Vietnamese',    prompt: 'Xin chào, vui lòng trả lời tôi bằng tiếng Việt.',            topic: 'languages' },
+    { label: 'Arabic',        prompt: 'مرحبا، من فضلك أجبني باللغة العربية.',                         topic: 'languages' },
+    { label: 'Hindi',         prompt: 'नमस्ते, कृपया मुझे हिंदी में जवाब दें।',                          topic: 'languages' },
+    { label: 'Persian',       prompt: 'سلام، لطفاً به فارسی پاسخ دهید.',                              topic: 'languages' },
+    { label: 'Russian',       prompt: 'Привет, пожалуйста, отвечай мне по-русски.',                  topic: 'languages' },
+    { label: 'German',        prompt: 'Hallo, bitte antworte mir auf Deutsch.',                      topic: 'languages' },
+    { label: 'Italian',       prompt: 'Ciao, per favore rispondimi in italiano.',                    topic: 'languages' },
+    { label: 'English',       prompt: 'Please respond to me in English from now on.',                topic: 'root' },
+    { label: '← Back',        isBack: true },
+  ],
 };
 
 function detectChipSet(t) {
@@ -472,6 +490,7 @@ function detectChipSet(t) {
   if (t.match(/contact|phone|email|office hours|registrar|it help|campus police|dean/))               return 'departments';
   if (t.match(/park|permit|map|lot|visitor|ada|shuttle|ev charging|carpool/))                          return 'parking';
   if (t.match(/tutor|writing|disabilit|food|pantry|career|library|veteran|lgbtq|printing/))           return 'services';
+  if (t.match(/español|japanese|français|tagalog|portuguese|mandarin|korean|vietnamese|arabic|hindi|language/)) return 'languages';
   return 'root';
 }
 
