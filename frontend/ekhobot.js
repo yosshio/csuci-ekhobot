@@ -30,6 +30,7 @@ let history = [];           // Chat message history for Claude API
 let currentTopic = 'root';  // Current chip category being displayed
 let chatInitialized = false; // Whether initial greeting has been shown
 let currentLanguage = 'en'; // Current selected language
+let showingMore = false;    // Whether showing page 2 of chips
 
 /*
 Language options for dropdown selector
@@ -52,6 +53,46 @@ const LANGUAGES = [
   { label: 'Deutsch', code: 'de', prompt: 'Bitte antworte mir auf Deutsch.' },
   { label: 'Italiano', code: 'it', prompt: 'Per favore rispondimi in italiano.' },
 ];
+
+// Chip label translations
+const CHIP_TRANSLATIONS = {
+  en: {
+    'Admissions': 'Admissions', 'Financial Aid': 'Financial Aid', 'Advising': 'Advising',
+    'Counseling': 'Counseling', 'Housing': 'Housing', 'Programs': 'Programs',
+    'Events': 'Events', 'Services': 'Services', 'Parking': 'Parking',
+    'Departments': 'Departments', 'Meet Advisor': 'Meet Advisor', 'Degree Plan': 'Degree Plan',
+    'Change Major': 'Change Major', 'Grad Reqs': 'Grad Reqs', 'Add/Drop': 'Add/Drop',
+    'GE Reqs': 'GE Reqs', 'Transfer Cr.': 'Transfer Cr.', 'Waitlist': 'Waitlist',
+    'Units Req.': 'Units Req.', 'Double Major': 'Double Major', 'More...': 'More...',
+    'Back': 'Back', 'Home': 'Home'
+  },
+  es: {
+    'Admissions': 'Admisiones', 'Financial Aid': 'Ayuda Financiera', 'Advising': 'Asesoría',
+    'Counseling': 'Consejería', 'Housing': 'Vivienda', 'Programs': 'Programas',
+    'Events': 'Eventos', 'Services': 'Servicios', 'Parking': 'Estacionamiento',
+    'Departments': 'Departamentos', 'Meet Advisor': 'Ver Asesor', 'Degree Plan': 'Plan de Estudios',
+    'Change Major': 'Cambiar Carrera', 'Grad Reqs': 'Requisitos', 'Add/Drop': 'Agregar/Eliminar',
+    'GE Reqs': 'Requisitos GE', 'Transfer Cr.': 'Créditos Transfer', 'Waitlist': 'Lista de Espera',
+    'Units Req.': 'Unidades Req.', 'Double Major': 'Doble Carrera', 'More...': 'Más...',
+    'Back': '← Atrás', 'Home': '🏠 Inicio'
+  },
+  ja: {
+    'Admissions': '入学', 'Financial Aid': '財政援助', 'Advising': 'アドバイス',
+    'Counseling': 'カウンセリング', 'Housing': '住居', 'Programs': 'プログラム',
+    'Events': 'イベント', 'Services': 'サービス', 'Parking': '駐車場',
+    'Departments': '部門', 'Meet Advisor': 'アドバイザー', 'Degree Plan': '学位計画',
+    'Change Major': '専攻変更', 'Grad Reqs': '卒業要件', 'Add/Drop': '追加/削除',
+    'GE Reqs': 'GE要件', 'Transfer Cr.': '編入単位', 'Waitlist': 'ウェイトリスト',
+    'Units Req.': '必要単位', 'Double Major': 'ダブル専攻', 'More...': 'もっと...',
+    'Back': '← 戻る', 'Home': '🏠 ホーム'
+  }
+};
+
+// helper function to translate chip labels
+function t(key) {
+  const lang = currentLanguage;
+  return CHIP_TRANSLATIONS[lang]?.[key] || CHIP_TRANSLATIONS['en'][key] || key;
+}
 
 /*
 ================================================================================
@@ -573,7 +614,7 @@ launcher.id = 'ekho-launcher';
 
 const speech = document.createElement('div');
 speech.id = 'ekho-speech';
-speech.textContent = 'Need some help? 🐬';
+speech.textContent = 'Need some help?';
 speech.onclick = () => openChat();
 
 const bubble = document.createElement('div');
@@ -787,23 +828,54 @@ Layout:
   - Sub-topics: 10 chips + Home button (fills 11 spots in 5-column grid)
 */
 function renderChips(topicKey) {
+  // switching topics? reset back to page 1
+  if (topicKey !== currentTopic) {
+    showingMore = false;
+  }
   currentTopic = topicKey;
+  
   const bar = document.getElementById('ekho-chip-bar');
   bar.innerHTML = '';
   
   const chips = CHIP_SETS[topicKey] || CHIP_SETS.root;
   const isRoot = topicKey === 'root';
+  const totalChips = chips.length;
   
-  // Show first 10 chips (most commonly used at CSUCI)
-  chips.slice(0, 10).forEach(c => addChipBtn(bar, c));
-  
-  // Add Home button if not on root (11th button)
-  if (!isRoot) {
-    const home = document.createElement('button');
-    home.className = 'ekho-chip home';
-    home.textContent = '🏠 Home';
-    home.onclick = () => renderChips('root');
-    bar.appendChild(home);
+  if (showingMore) {
+    // page 2: show remaining chips plus back button
+    chips.slice(9, 18).forEach(c => addChipBtn(bar, c));
+    
+    const back = document.createElement('button');
+    back.className = 'ekho-chip home';
+    back.textContent = t('Back');
+    back.onclick = () => {
+      showingMore = false;
+      renderChips(topicKey);
+    };
+    bar.appendChild(back);
+  } else {
+    // page 1: show first 9 chips, then add More/Home/nothing as 10th button
+    chips.slice(0, 9).forEach(c => addChipBtn(bar, c));
+    
+    if (totalChips > 9) {
+      // more chips exist, show More button
+      const more = document.createElement('button');
+      more.className = 'ekho-chip';
+      more.textContent = t('More...');
+      more.onclick = () => {
+        showingMore = true;
+        renderChips(topicKey);
+      };
+      bar.appendChild(more);
+    } else if (!isRoot) {
+      // sub-topic with few chips, show Home button
+      const home = document.createElement('button');
+      home.className = 'ekho-chip home';
+      home.textContent = t('Home');
+      home.onclick = () => renderChips('root');
+      bar.appendChild(home);
+    }
+    // root with ≤9 chips: no extra button needed
   }
 }
 
@@ -816,8 +888,8 @@ PARAMETERS: bar (element) - Container to append to
 function addChipBtn(bar, chip) {
   const { label, prompt, topic, future } = chip;
   const btn = document.createElement('button');
-  btn.textContent = label;
-  btn.title = label;
+  btn.textContent = t(label);  // translate the label
+  btn.title = t(label);
   
   if (future) {
     // Coming soon feature
