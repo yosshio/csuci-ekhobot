@@ -42,7 +42,7 @@ export async function fetchLatestEvents() {
 
   let saved = 0;
 
-  // Auto-discover news article links from the main news page
+  // Automatically search news article links from the main news page
   try {
     const newsRes = await fetch('https://www.csuci.edu/news/', {
       headers: { 'User-Agent': 'EkhoBot/1.0' }
@@ -53,7 +53,7 @@ export async function fetchLatestEvents() {
     const href = $news(el).attr('href') || '';
     let fullUrl = '';
     if (href.startsWith('http')) {
-      fullUrl = href; // already a full URL, use as-is
+      fullUrl = href; // already a full URL, use as is
     } else if (href.startsWith('/')) {
       fullUrl = 'https://www.csuci.edu' + href; // relative URL, add domain
     }
@@ -80,7 +80,7 @@ export async function fetchLatestEvents() {
       const html = await res.text();
       const $ = cheerio.load(html);
 
-      // Aggressively remove all noise
+      // Remove all noise
       $('script, style, noscript, iframe, nav, footer, header').remove();
       $('[class*="cookie"], [class*="banner"], [class*="alert"], [id*="cookie"]').remove();
       $('[class*="nav"], [class*="menu"], [class*="sidebar"]').remove();
@@ -94,7 +94,7 @@ export async function fetchLatestEvents() {
         text = $('body').text();
       }
 
-      // Clean up whitespace
+      // Clean whitespace
       text = text
         .replace(/\t/g, ' ')
         .replace(/ {2,}/g, ' ')
