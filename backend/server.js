@@ -240,6 +240,8 @@ RETURNS: Formatted search results or empty string if failed
 
 This fallback ensures EkhoBot can answer questions even if the content
 was not crawled or indexed in the database.
+
+**BRAVE API DOES NOT CURRENTLY HAVE ANY CREDITS AND THEREFORE IS NOT IN USE**
 */
 async function webSearchFallback(query) {
   if (!process.env.BRAVE_SEARCH_KEY) {

@@ -213,7 +213,7 @@ CONFIGURATION
 ================================================================================
 */
 
-const MAX_PAGES = 500;      // Max pages to crawl before stopping
+const MAX_PAGES = 1500;      // Max pages to crawl before stopping
 const CHUNK_SIZE = 800;     // Characters per text chunk
 
 /*

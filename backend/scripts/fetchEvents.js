@@ -8,7 +8,7 @@ This script runs nightly to keep event information up to date.
 This file is imported by server.js and runs on:
   - Server startup
   - Every night at midnight via node-cron
-  - Manually via: node scripts/fetchEvents.js
+  - Manually: node scripts/fetchEvents.js
 ================================================================================
 */
 
