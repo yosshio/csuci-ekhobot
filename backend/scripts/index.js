@@ -17,6 +17,27 @@ async function loadEmbedder() {
   return embedder;
 }
 
+async function getSitemapUrls() {
+  try {
+    console.log('Fetching sitemap...');
+    const res = await fetch('https://www.csuci.edu/sitemap.xml');
+    const xml = await res.text();
+    const matches = xml.match(/<loc>(.*?)<\/loc>/g) || [];
+    const urls = matches
+      .map(m => m.replace(/<\/?loc>/g, '').trim())
+      .filter(url =>
+        url.includes('csuci.edu') &&
+        !url.includes('?') &&
+        !url.match(/\.(pptx|docx|zip|mp4|mp3|css|js)$/i)
+      );
+    console.log(`Found ${urls.length} URLs in sitemap\n`);
+    return urls;
+  } catch (err) {
+    console.log('Sitemap fetch failed:', err.message);
+    return [];
+  }
+}
+
 async function getEmbedding(text) {
   const model = await loadEmbedder();
   const output = await model(text.slice(0, 8000), {
@@ -87,106 +108,108 @@ async function extractPdf(url) {
 }
 
 const SEED_URLS = [
-  // Main
-  'https://www.csuci.edu/',
-  'https://www.csuci.edu/about/',
-  'https://www.csuci.edu/contact.htm',
-  'https://www.csuci.edu/students/',
-  'https://www.csuci.edu/student-life/',
-  'https://www.csuci.edu/studentaffairs/',
-  'https://www.csuci.edu/emergencyinfo/',
-  'https://www.csuci.edu/titleix/',
-  'https://www.csuci.edu/alumni/',
-  'https://www.csuci.edu/parenting-students/index.htm',
-  'https://www.csuci.edu/faculty/',
-  'https://www.csuci.edu/staff/',
+  'https://www.csuci.edu/sitemap.xml'
 
-  // Admissions
-  'https://www.csuci.edu/admissions/',
-  'https://www.csuci.edu/admissions/freshman/',
-  'https://www.csuci.edu/admissions/transfer/',
-  'https://www.csuci.edu/admissions/graduate/',
-  'https://www.csuci.edu/admissions/international/',
-  'https://www.csuci.edu/admissions/apply-now.htm',
-  'https://www.csuci.edu/admissions/tuition-and-aid/',
-  'https://www.csuci.edu/visit-campus/',
-  'https://www.csuci.edu/visit-campus/tours/index.htm',
-  'https://www.csuci.edu/orientation/',
-  'https://www.csuci.edu/orientation/nso-checklist.htm',
+  // // Main
+  // 'https://www.csuci.edu/',
+  // 'https://www.csuci.edu/about/',
+  // 'https://www.csuci.edu/contact.htm',
+  // 'https://www.csuci.edu/students/',
+  // 'https://www.csuci.edu/student-life/',
+  // 'https://www.csuci.edu/studentaffairs/',
+  // 'https://www.csuci.edu/emergencyinfo/',
+  // 'https://www.csuci.edu/titleix/',
+  // 'https://www.csuci.edu/alumni/',
+  // 'https://www.csuci.edu/parenting-students/index.htm',
+  // 'https://www.csuci.edu/faculty/',
+  // 'https://www.csuci.edu/staff/',
 
-  // Academics
-  'https://www.csuci.edu/academics/',
-  'https://www.csuci.edu/academics/programs/',
+  // // Admissions
+  // 'https://www.csuci.edu/admissions/',
+  // 'https://www.csuci.edu/admissions/freshman/',
+  // 'https://www.csuci.edu/admissions/transfer/',
+  // 'https://www.csuci.edu/admissions/graduate/',
+  // 'https://www.csuci.edu/admissions/international/',
+  // 'https://www.csuci.edu/admissions/apply-now.htm',
+  // 'https://www.csuci.edu/admissions/tuition-and-aid/',
+  // 'https://www.csuci.edu/visit-campus/',
+  // 'https://www.csuci.edu/visit-campus/tours/index.htm',
+  // 'https://www.csuci.edu/orientation/',
+  // 'https://www.csuci.edu/orientation/nso-checklist.htm',
 
-  // Academic Advising
-  'https://www.csuci.edu/advising/',
-  'https://www.csuci.edu/advising/advisor/index.htm',
-  'https://www.csuci.edu/advising/advisor/drop-in-advising.htm',
-  'https://www.csuci.edu/advising/resources/index.htm',
-  'https://www.csuci.edu/advising/resources/freshman.htm',
-  'https://www.csuci.edu/advising/resources/transfer.htm',
-  'https://www.csuci.edu/advising/resources/academic-roadmaps/index.htm',
-  'https://www.csuci.edu/advising/services/index.htm',
-  'https://www.csuci.edu/advising/services/workshops.htm',
-  'https://www.csuci.edu/advising/gsc/index.htm',
-  'https://www.csuci.edu/advising/faq.htm',
-  'https://www.csuci.edu/advising/contact.htm',
+  // // Academics
+  // 'https://www.csuci.edu/academics/',
+  // 'https://www.csuci.edu/academics/programs/',
 
-  // Financial Aid
-  'https://www.csuci.edu/financialaid/',
-  'https://www.csuci.edu/financialaid/types/',
-  'https://www.csuci.edu/financialaid/apply.htm',
-  'https://www.csuci.edu/financialaid/deadlines.htm',
-  'https://www.csuci.edu/financialaid/dream-act.htm',
-  'https://www.csuci.edu/financialaid/satisfactory-academic-progress.htm',
-  'https://www.csuci.edu/financialaid/verification.htm',
-  'https://www.csuci.edu/financialaid/appeal.htm',
-  'https://www.csuci.edu/financialaid/contact.htm',
-  'https://www.csuci.edu/financialaid/faqs.htm',
+  // // Academic Advising
+  // 'https://www.csuci.edu/advising/',
+  // 'https://www.csuci.edu/advising/advisor/index.htm',
+  // 'https://www.csuci.edu/advising/advisor/drop-in-advising.htm',
+  // 'https://www.csuci.edu/advising/resources/index.htm',
+  // 'https://www.csuci.edu/advising/resources/freshman.htm',
+  // 'https://www.csuci.edu/advising/resources/transfer.htm',
+  // 'https://www.csuci.edu/advising/resources/academic-roadmaps/index.htm',
+  // 'https://www.csuci.edu/advising/services/index.htm',
+  // 'https://www.csuci.edu/advising/services/workshops.htm',
+  // 'https://www.csuci.edu/advising/gsc/index.htm',
+  // 'https://www.csuci.edu/advising/faq.htm',
+  // 'https://www.csuci.edu/advising/contact.htm',
 
-  // Registrar
-  'https://www.csuci.edu/registrar/',
-  'https://www.csuci.edu/registrar/registration/',
-  'https://www.csuci.edu/registrar/graduation/',
-  'https://www.csuci.edu/registrar/transcripts.htm',
-  'https://www.csuci.edu/registrar/enrollment-verification.htm',
-  'https://www.csuci.edu/registrar/deadlines.htm',
+  // // Financial Aid
+  // 'https://www.csuci.edu/financialaid/',
+  // 'https://www.csuci.edu/financialaid/types/',
+  // 'https://www.csuci.edu/financialaid/apply.htm',
+  // 'https://www.csuci.edu/financialaid/deadlines.htm',
+  // 'https://www.csuci.edu/financialaid/dream-act.htm',
+  // 'https://www.csuci.edu/financialaid/satisfactory-academic-progress.htm',
+  // 'https://www.csuci.edu/financialaid/verification.htm',
+  // 'https://www.csuci.edu/financialaid/appeal.htm',
+  // 'https://www.csuci.edu/financialaid/contact.htm',
+  // 'https://www.csuci.edu/financialaid/faqs.htm',
 
-  // Housing
-  'https://www.csuci.edu/housing/',
-  'https://www.csuci.edu/housing/apply.htm',
-  'https://www.csuci.edu/housing/rates.htm',
-  'https://www.csuci.edu/housing/meal-plans.htm',
-  'https://www.csuci.edu/housing/accommodations-rates/parking-info.htm',
+  // // Registrar
+  // 'https://www.csuci.edu/registrar/',
+  // 'https://www.csuci.edu/registrar/registration/',
+  // 'https://www.csuci.edu/registrar/graduation/',
+  // 'https://www.csuci.edu/registrar/transcripts.htm',
+  // 'https://www.csuci.edu/registrar/enrollment-verification.htm',
+  // 'https://www.csuci.edu/registrar/deadlines.htm',
 
-  // Student Services
-  'https://www.csuci.edu/student-life/student-services/',
-  'https://www.csuci.edu/caps/',
-  'https://www.csuci.edu/dass/',
-  'https://www.csuci.edu/eop/',
-  'https://www.csuci.edu/careerdevelopment/',
-  'https://www.csuci.edu/veterans/',
-  'https://www.csuci.edu/basicneeds/index.htm',
-  'https://www.csuci.edu/wpe/index.htm',
-  'https://www.csuci.edu/cultural-centers/index.htm',
-  'https://www.csuci.edu/international/',
-  'https://www.csuci.edu/writing-ci/guide/',
-  'https://www.csuci.edu/student-life/dining.htm',
-  'https://www.csuci.edu/student-life/student-activities/',
+  // // Housing
+  // 'https://www.csuci.edu/housing/',
+  // 'https://www.csuci.edu/housing/apply.htm',
+  // 'https://www.csuci.edu/housing/rates.htm',
+  // 'https://www.csuci.edu/housing/meal-plans.htm',
+  // 'https://www.csuci.edu/housing/accommodations-rates/parking-info.htm',
 
-  // Parking
-  'https://www.csuci.edu/publicsafety/parking/',
-  'https://www.csuci.edu/publicsafety/parking/Parking_Forms.htm',
-  'https://www.csuci.edu/publicsafety/parking/faq.htm',
+  // // Student Services
+  // 'https://www.csuci.edu/student-life/student-services/',
+  // 'https://www.csuci.edu/caps/',
+  // 'https://www.csuci.edu/dass/',
+  // 'https://www.csuci.edu/eop/',
+  // 'https://www.csuci.edu/careerdevelopment/',
+  // 'https://www.csuci.edu/veterans/',
+  // 'https://www.csuci.edu/basicneeds/index.htm',
+  // 'https://www.csuci.edu/wpe/index.htm',
+  // 'https://www.csuci.edu/cultural-centers/index.htm',
+  // 'https://www.csuci.edu/international/',
+  // 'https://www.csuci.edu/writing-ci/guide/',
+  // 'https://www.csuci.edu/student-life/dining.htm',
+  // 'https://www.csuci.edu/student-life/student-activities/',
 
-  // Library
-  'https://library.csuci.edu',
+  // // Parking
+  // 'https://www.csuci.edu/publicsafety/parking/',
+  // 'https://www.csuci.edu/publicsafety/parking/Parking_Forms.htm',
+  // 'https://www.csuci.edu/publicsafety/parking/faq.htm',
 
-  // Commencement & Events
-  'https://www.csuci.edu/commencement/ceremony-info/index.htm',
-  'https://www.csuci.edu/news/',
-  'https://www.csuci.edu/giving/',
-  'https://www.csuci.edu/careers/',
+  // // Library
+  // 'https://library.csuci.edu',
+
+  // // Commencement & Events
+  // 'https://www.csuci.edu/commencement/ceremony-info/index.htm',
+  // 'https://www.csuci.edu/news/',
+  // 'https://www.csuci.edu/giving/',
+  // 'https://www.csuci.edu/careers/',
 ];
 
 const MAX_PAGES = 500;
@@ -194,6 +217,7 @@ const CHUNK_SIZE = 800;
 
 async function crawl() {
   const visited = new Set();
+  const sitemapUrls = await getSitemapUrls();
   const queue = [...SEED_URLS];
   let pageCount = 0;
   let chunkCount = 0;

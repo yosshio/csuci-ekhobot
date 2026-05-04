@@ -3,6 +3,17 @@ let history = [];
 let currentTopic = 'root';
 let chipsExpanded = false;
 let chatInitialized = false;
+let currentLanguage = 'en';
+
+const LANGUAGE_PICKER = [
+  { label: 'Español',    code: 'es', prompt: 'Respóndeme en español de ahora en adelante.' },
+  { label: 'English',    code: 'en', prompt: 'Please respond in English from now on.' },
+];
+
+const LANG_HINTS = {
+  es: 'Para volver al inglés, escribe "English" abajo',
+  en: ''
+};
 
 const style = document.createElement('style');
 style.textContent = `
@@ -582,7 +593,7 @@ document.getElementById('ekho-input').onkeydown = e => {
     e.preventDefault();
     sendMessage();
   }
-  // Allow all other keys including arrow keys to work normally
+  // Allows all other keys including arrow keys to work normally
 };
 document.getElementById('ekho-input').addEventListener('keydown', e => {
   e.stopPropagation();
@@ -649,6 +660,11 @@ function addChipBtn(bar, chip) {
       fetchReply(topic);
     };
   }
+  if (chip.isLang) {
+    btn.onclick = () => {
+    renderLanguagePicker();
+  };
+}
   bar.appendChild(btn);
 }
 
@@ -809,4 +825,34 @@ async function fetchReply(forcedTopic) {
     addBotMessage('EkhoBot is offline right now. Try again shortly!');
     renderChips('root', false);
   }
+}
+
+function renderLanguagePicker() {
+  const bar = document.getElementById('ekho-chip-bar');
+  bar.innerHTML = '';
+  LANGUAGE_PICKER.forEach(lang => {
+    const btn = document.createElement('button');
+    btn.className = 'ekho-chip lang';
+    btn.textContent = lang.label;
+    btn.onclick = () => {
+      currentLanguage = lang.code;
+      addUserMessage(lang.label);
+      history.push({ role: 'user', content: lang.prompt });
+      showTyping();
+      fetchReply('root');
+      if (lang.code !== 'en') {
+        addLangHint(LANG_HINTS[lang.code]);
+      }
+    };
+    bar.appendChild(btn);
+  });
+}
+
+function addLangHint(text) {
+  const msgs = document.getElementById('ekho-messages');
+  const msg = document.createElement('div');
+  msg.className = 'ekho-msg lang-hint';
+  msg.textContent = text;
+  msgs.appendChild(msg);
+  msgs.scrollTop = msgs.scrollHeight;
 }
