@@ -8,7 +8,6 @@ const style = document.createElement('style');
 style.textContent = `
   @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600&display=swap');
 
-  /* --- Launcher wrapper --- */
   #ekho-launcher {
     position: fixed; bottom: 24px; right: 24px; z-index: 9999;
     display: flex; flex-direction: row; align-items: flex-end; gap: 10px;
@@ -16,7 +15,6 @@ style.textContent = `
   }
   #ekho-launcher.hidden { opacity: 0; pointer-events: none; }
 
-  /* --- Speech bubble tooltip --- */
   #ekho-speech {
     background: #fff;
     color: #1a1a1a;
@@ -48,7 +46,6 @@ style.textContent = `
     100% { opacity: 1; transform: scale(1); }
   }
 
-  /* --- Main red circle bubble --- */
   #ekho-bubble {
     width: 60px; height: 60px; border-radius: 50%;
     background: #C8102E;
@@ -58,16 +55,14 @@ style.textContent = `
     align-items: center; justify-content: center;
     transition: background 0.15s, transform 0.15s;
     outline: none; padding: 0;
-    /* make it a plain div not button to avoid browser outline */
   }
   #ekho-bubble:hover { background: #a00d24; transform: scale(1.06); }
 
-  /* --- Chat Window --- */
   #ekho-window {
     position: fixed;
     bottom: 0; right: 0;
     width: min(420px, 100vw);
-    height: min(600px, 100vh);
+    height: min(700px, 100vh);
     background: #fff;
     border-radius: 14px 14px 0 0;
     border: 1px solid #E8E9EA;
@@ -83,7 +78,7 @@ style.textContent = `
     #ekho-window {
       bottom: 24px; right: 24px;
       width: min(420px, calc(100vw - 48px));
-      height: min(600px, calc(100vh - 48px));
+      height: min(700px, calc(100vh - 48px));
       border-radius: 14px;
       border-bottom: 1px solid #E8E9EA;
       box-shadow: 0 8px 36px rgba(0,0,0,0.13);
@@ -93,7 +88,7 @@ style.textContent = `
   @media (min-width: 900px) {
     #ekho-window {
       width: min(450px, calc(100vw - 48px));
-      height: min(630px, calc(100vh - 48px));
+      height: min(750px, calc(100vh - 48px));
     }
   }
 
@@ -115,7 +110,6 @@ style.textContent = `
     50% { opacity: 0.85; }
   }
 
-  /* --- Header --- */
   #ekho-header {
     background: #C8102E;
     padding: 0 18px; height: 58px;
@@ -148,14 +142,13 @@ style.textContent = `
   }
   #ekho-close:hover { color: #fff; }
 
-  /* --- Messages --- */
   #ekho-messages {
     flex: 1;
     overflow-y: auto;
     padding: 13px;
     display: flex;
     flex-direction: column;
-    gap: 9px;  
+    gap: 9px;
     background: #F7F7F8;
     scrollbar-width: thin;
     scrollbar-color: #E8E9EA transparent;
@@ -199,7 +192,6 @@ style.textContent = `
     border-bottom-left-radius: 3px; font-size: 13px;
   }
 
-  /* --- Chip bar --- */
   #ekho-chip-bar {
     padding: 6px 8px; background: #fff;
     border-top: 1px solid #E8E9EA;
@@ -218,18 +210,11 @@ style.textContent = `
     overflow: hidden; text-overflow: ellipsis; text-align: center;
   }
   .ekho-chip:hover { background: #C8102E; color: #fff; }
-
-  .ekho-chip.secondary {
-    border-color: #A7A9AC; color: #6b6d6f;
-  }
+  .ekho-chip.secondary { border-color: #A7A9AC; color: #6b6d6f; }
   .ekho-chip.secondary:hover { background: #A7A9AC; color: #fff; border-color: #A7A9AC; }
-
-  .ekho-chip.future {
-    border-color: #A7A9AC; color: #A7A9AC; background: #F7F7F8;
-  }
+  .ekho-chip.future { border-color: #A7A9AC; color: #A7A9AC; background: #F7F7F8; }
   .ekho-chip.future:hover { background: #A7A9AC; color: #fff; border-color: #A7A9AC; }
 
-  /* --- Input area --- */
   #ekho-input-area {
     padding: 9px 12px; background: #fff;
     display: flex; gap: 8px; align-items: center;
@@ -254,7 +239,6 @@ style.textContent = `
   }
   #ekho-send:hover { background: #a00d24; }
 
-  /* --- Typing --- */
   .ekho-typing {
     display: flex; gap: 3px; align-items: center;
     padding: 9px 13px; background: #fff;
@@ -277,23 +261,23 @@ const dolphinBubble = `<svg width="26" height="26" viewBox="0 0 24 24" fill="non
 
 const CHIP_SETS = {
   root: [
-  { label: 'Admissions',    prompt: 'Tell me about admissions at CSUCI',                  topic: 'admissions' },
-  { label: 'Financial Aid', prompt: 'What financial aid is available at CSUCI?',           topic: 'financialaid' },
-  { label: 'Advising',      prompt: 'Tell me about academic advising at CSUCI',            topic: 'advising' },
-  { label: 'Counseling',    prompt: 'What counseling services does CSUCI offer?',          topic: 'counseling' },
-  { label: 'Housing',       prompt: 'Tell me about student housing at CSUCI',              topic: 'housing' },
-  { label: 'Programs',      prompt: 'What academic programs does CSUCI offer?',            topic: 'programs' },
-  { label: 'Events',        prompt: 'What events are happening on campus?',               topic: 'events' },
-  { label: 'Services',      prompt: 'What student services are available at CSUCI?',      topic: 'services' },
-  { label: 'Departments',   prompt: 'I need to contact a CSUCI department.',              topic: 'departments' },
-  { label: 'Parking',       prompt: 'Tell me about parking at CSUCI',                     topic: 'parking' },
-  { label: 'Campus Police', prompt: 'How do I contact CSUCI Campus Police or Public Safety?', topic: 'departments' },
-  { label: 'Transit',       prompt: 'What transportation and shuttle options are available at CSUCI?', topic: 'parking' },
-  { label: 'Tuition',       prompt: 'How much does it cost to attend CSUCI?',             topic: 'financialaid' },
-  { label: 'Library',       prompt: 'How do I access the CSUCI library?',                 topic: 'services' },
-  { label: 'Appointment',   future: true },
-  { label: 'Calendar',      future: true },
-],
+    { label: 'Admissions',    prompt: 'Tell me about admissions at CSUCI',                      topic: 'admissions' },
+    { label: 'Financial Aid', prompt: 'What financial aid is available at CSUCI?',               topic: 'financialaid' },
+    { label: 'Advising',      prompt: 'Tell me about academic advising at CSUCI',                topic: 'advising' },
+    { label: 'Counseling',    prompt: 'What counseling services does CSUCI offer?',              topic: 'counseling' },
+    { label: 'Housing',       prompt: 'Tell me about student housing at CSUCI',                  topic: 'housing' },
+    { label: 'Programs',      prompt: 'What academic programs does CSUCI offer?',                topic: 'programs' },
+    { label: 'Events',        prompt: 'What events are happening on campus?',                   topic: 'events' },
+    { label: 'Services',      prompt: 'What student services are available at CSUCI?',          topic: 'services' },
+    { label: 'Departments',   prompt: 'I need to contact a CSUCI department.',                  topic: 'departments' },
+    { label: 'Parking',       prompt: 'Tell me about parking at CSUCI',                         topic: 'parking' },
+    { label: 'Campus Police', prompt: 'How do I contact CSUCI Campus Police or Public Safety?', topic: 'departments' },
+    { label: 'Transit',       prompt: 'What transportation and shuttle options are available at CSUCI?', topic: 'parking' },
+    { label: 'Tuition',       prompt: 'How much does it cost to attend CSUCI?',                 topic: 'financialaid' },
+    { label: 'Library',       prompt: 'How do I access the CSUCI library?',                     topic: 'services' },
+    { label: 'Appointment',   future: true },
+    { label: 'Calendar',      future: true },
+  ],
   advising: [
     { label: 'Meet Advisor',  prompt: 'How do I meet with an academic advisor at CSUCI?',          topic: 'advising' },
     { label: 'Degree Plan',   prompt: 'How do I plan my degree at CSUCI?',                          topic: 'advising' },
@@ -331,148 +315,148 @@ const CHIP_SETS = {
     { label: 'Confidential?', prompt: 'Is CSUCI counseling confidential?',                         topic: 'counseling' },
   ],
   admissions: [
-    { label: 'How to Apply',  prompt: 'How do I apply to CSUCI?',                          topic: 'admissions' },
-    { label: 'Transfer',      prompt: 'How do I transfer to CSUCI?',                       topic: 'admissions' },
-    { label: 'Deadlines',     prompt: 'What are the application deadlines at CSUCI?',      topic: 'admissions' },
-    { label: 'Requirements',  prompt: 'What are the admission requirements for CSUCI?',    topic: 'admissions' },
-    { label: 'International', prompt: 'How do international students apply to CSUCI?',     topic: 'admissions' },
-    { label: 'Campus Tour',   prompt: 'How do I schedule a campus tour at CSUCI?',         topic: 'admissions' },
-    { label: 'Waitlist',      prompt: 'How does the CSUCI admissions waitlist work?',      topic: 'admissions' },
-    { label: 'App Status',    prompt: 'How do I check my application status at CSUCI?',    topic: 'admissions' },
-    { label: 'High School',   prompt: 'Does CSUCI have programs for high school students?',topic: 'admissions' },
-    { label: 'Early Decision',prompt: 'Does CSUCI offer early decision?',                  topic: 'admissions' },
-    { label: 'GPA Required',  prompt: 'What GPA do I need to get into CSUCI?',             topic: 'admissions' },
-    { label: 'Impacted',      prompt: 'What are the impacted majors at CSUCI?',            topic: 'admissions' },
-    { label: 'SAT/ACT',       prompt: 'Does CSUCI require SAT or ACT scores?',             topic: 'admissions' },
-    { label: 'Acceptance',    prompt: 'What is the acceptance rate at CSUCI?',             topic: 'admissions' },
-    { label: 'Contact',       prompt: 'How do I contact the CSUCI Admissions Office?',     topic: 'admissions' },
-    { label: 'Orientation',   prompt: 'When is new student orientation at CSUCI?',         topic: 'admissions' },
+    { label: 'How to Apply',  prompt: 'How do I apply to CSUCI?',                           topic: 'admissions' },
+    { label: 'Transfer',      prompt: 'How do I transfer to CSUCI?',                        topic: 'admissions' },
+    { label: 'Deadlines',     prompt: 'What are the application deadlines at CSUCI?',       topic: 'admissions' },
+    { label: 'Requirements',  prompt: 'What are the admission requirements for CSUCI?',     topic: 'admissions' },
+    { label: 'International', prompt: 'How do international students apply to CSUCI?',      topic: 'admissions' },
+    { label: 'Campus Tour',   prompt: 'How do I schedule a campus tour at CSUCI?',          topic: 'admissions' },
+    { label: 'Waitlist',      prompt: 'How does the CSUCI admissions waitlist work?',       topic: 'admissions' },
+    { label: 'App Status',    prompt: 'How do I check my application status at CSUCI?',     topic: 'admissions' },
+    { label: 'High School',   prompt: 'Does CSUCI have programs for high school students?', topic: 'admissions' },
+    { label: 'Early Decision',prompt: 'Does CSUCI offer early decision?',                   topic: 'admissions' },
+    { label: 'GPA Required',  prompt: 'What GPA do I need to get into CSUCI?',              topic: 'admissions' },
+    { label: 'Impacted',      prompt: 'What are the impacted majors at CSUCI?',             topic: 'admissions' },
+    { label: 'SAT/ACT',       prompt: 'Does CSUCI require SAT or ACT scores?',              topic: 'admissions' },
+    { label: 'Acceptance',    prompt: 'What is the acceptance rate at CSUCI?',              topic: 'admissions' },
+    { label: 'Contact',       prompt: 'How do I contact the CSUCI Admissions Office?',      topic: 'admissions' },
+    { label: 'Orientation',   prompt: 'When is new student orientation at CSUCI?',          topic: 'admissions' },
   ],
   financialaid: [
-    { label: 'FAFSA',         prompt: 'How do I complete the FAFSA for CSUCI?',            topic: 'financialaid' },
-    { label: 'Scholarships',  prompt: 'What scholarships are available at CSUCI?',         topic: 'financialaid' },
-    { label: 'Cal Grant',     prompt: 'How does Cal Grant work at CSUCI?',                 topic: 'financialaid' },
-    { label: 'Work-Study',    prompt: 'Does CSUCI offer work-study programs?',             topic: 'financialaid' },
-    { label: 'Deadlines',     prompt: 'What are the financial aid deadlines at CSUCI?',    topic: 'financialaid' },
-    { label: 'Dream Act',     prompt: 'How does the California Dream Act apply at CSUCI?', topic: 'financialaid' },
-    { label: 'Loans',         prompt: 'What student loans are available at CSUCI?',        topic: 'financialaid' },
-    { label: 'Tuition',       prompt: 'What are the tuition and fees at CSUCI?',           topic: 'financialaid' },
-    { label: 'Aid Appeal',    prompt: 'How do I appeal financial aid at CSUCI?',           topic: 'financialaid' },
-    { label: 'Disbursement',  prompt: 'When is financial aid disbursed at CSUCI?',         topic: 'financialaid' },
-    { label: 'SAP Policy',    prompt: 'What is the SAP policy for financial aid at CSUCI?',topic: 'financialaid' },
-    { label: 'Pell Grant',    prompt: 'How do I qualify for a Pell Grant at CSUCI?',       topic: 'financialaid' },
-    { label: 'Contact',       prompt: 'How do I contact CSUCI Financial Aid Office?',      topic: 'financialaid' },
-    { label: 'Summer Aid',    prompt: 'Is financial aid available for summer at CSUCI?',   topic: 'financialaid' },
-    { label: 'Verification',  prompt: 'What is financial aid verification at CSUCI?',      topic: 'financialaid' },
-    { label: 'EFC',           prompt: 'What is EFC and how does it affect my aid?',        topic: 'financialaid' },
+    { label: 'FAFSA',         prompt: 'How do I complete the FAFSA for CSUCI?',             topic: 'financialaid' },
+    { label: 'Scholarships',  prompt: 'What scholarships are available at CSUCI?',          topic: 'financialaid' },
+    { label: 'Cal Grant',     prompt: 'How does Cal Grant work at CSUCI?',                  topic: 'financialaid' },
+    { label: 'Work-Study',    prompt: 'Does CSUCI offer work-study programs?',              topic: 'financialaid' },
+    { label: 'Deadlines',     prompt: 'What are the financial aid deadlines at CSUCI?',     topic: 'financialaid' },
+    { label: 'Dream Act',     prompt: 'How does the California Dream Act apply at CSUCI?',  topic: 'financialaid' },
+    { label: 'Loans',         prompt: 'What student loans are available at CSUCI?',         topic: 'financialaid' },
+    { label: 'Tuition',       prompt: 'What are the tuition and fees at CSUCI?',            topic: 'financialaid' },
+    { label: 'Aid Appeal',    prompt: 'How do I appeal financial aid at CSUCI?',            topic: 'financialaid' },
+    { label: 'Disbursement',  prompt: 'When is financial aid disbursed at CSUCI?',          topic: 'financialaid' },
+    { label: 'SAP Policy',    prompt: 'What is the SAP policy for financial aid at CSUCI?', topic: 'financialaid' },
+    { label: 'Pell Grant',    prompt: 'How do I qualify for a Pell Grant at CSUCI?',        topic: 'financialaid' },
+    { label: 'Contact',       prompt: 'How do I contact CSUCI Financial Aid Office?',       topic: 'financialaid' },
+    { label: 'Summer Aid',    prompt: 'Is financial aid available for summer at CSUCI?',    topic: 'financialaid' },
+    { label: 'Verification',  prompt: 'What is financial aid verification at CSUCI?',       topic: 'financialaid' },
+    { label: 'EFC',           prompt: 'What is EFC and how does it affect my aid?',         topic: 'financialaid' },
   ],
   events: [
     { label: 'Calendar',      future: true },
-    { label: 'Clubs',         prompt: 'What student clubs are at CSUCI?',                  topic: 'events' },
-    { label: 'Orientation',   prompt: 'When is new student orientation at CSUCI?',         topic: 'events' },
-    { label: 'Sports',        prompt: 'What sports exist at CSUCI?',                       topic: 'events' },
-    { label: 'Commencement',  prompt: 'When is graduation at CSUCI?',                      topic: 'events' },
-    { label: 'Campus Life',   prompt: 'What is campus life like at CSUCI?',                topic: 'events' },
-    { label: 'Cultural',      prompt: 'What cultural events are held at CSUCI?',           topic: 'events' },
-    { label: 'Volunteer',     prompt: 'How do I volunteer or get service hours at CSUCI?', topic: 'events' },
-    { label: 'Speakers',      prompt: 'Does CSUCI host guest speakers?',                   topic: 'events' },
-    { label: 'Greek Life',    prompt: 'Does CSUCI have fraternities or sororities?',       topic: 'events' },
-    { label: 'Intramurals',   prompt: 'Does CSUCI have intramural sports?',                topic: 'events' },
-    { label: 'Student Govt',  prompt: 'How does student government work at CSUCI?',        topic: 'events' },
-    { label: 'Fitness',       prompt: 'What fitness facilities does CSUCI have?',          topic: 'events' },
-    { label: 'Art & Music',   prompt: 'What arts and music events does CSUCI offer?',      topic: 'events' },
+    { label: 'Clubs',         prompt: 'What student clubs are at CSUCI?',                   topic: 'events' },
+    { label: 'Orientation',   prompt: 'When is new student orientation at CSUCI?',          topic: 'events' },
+    { label: 'Sports',        prompt: 'What sports exist at CSUCI?',                        topic: 'events' },
+    { label: 'Commencement',  prompt: 'When is graduation at CSUCI?',                       topic: 'events' },
+    { label: 'Campus Life',   prompt: 'What is campus life like at CSUCI?',                 topic: 'events' },
+    { label: 'Cultural',      prompt: 'What cultural events are held at CSUCI?',            topic: 'events' },
+    { label: 'Volunteer',     prompt: 'How do I volunteer or get service hours at CSUCI?',  topic: 'events' },
+    { label: 'Speakers',      prompt: 'Does CSUCI host guest speakers?',                    topic: 'events' },
+    { label: 'Greek Life',    prompt: 'Does CSUCI have fraternities or sororities?',        topic: 'events' },
+    { label: 'Intramurals',   prompt: 'Does CSUCI have intramural sports?',                 topic: 'events' },
+    { label: 'Student Govt',  prompt: 'How does student government work at CSUCI?',         topic: 'events' },
+    { label: 'Fitness',       prompt: 'What fitness facilities does CSUCI have?',           topic: 'events' },
+    { label: 'Art & Music',   prompt: 'What arts and music events does CSUCI offer?',       topic: 'events' },
     { label: 'Community Svc', prompt: 'What community service opportunities exist at CSUCI?', topic: 'events' },
-    { label: 'Networking',    prompt: 'What networking events does CSUCI host?',           topic: 'events' },
+    { label: 'Networking',    prompt: 'What networking events does CSUCI host?',            topic: 'events' },
   ],
   housing: [
-    { label: 'On-Campus',     prompt: 'What on-campus housing does CSUCI offer?',         topic: 'housing' },
-    { label: 'Off-Campus',    prompt: 'Are there off-campus housing resources at CSUCI?', topic: 'housing' },
-    { label: 'Costs',         prompt: 'How much does CSUCI housing cost?',                topic: 'housing' },
-    { label: 'Apply',         prompt: 'How do I apply for CSUCI housing?',                topic: 'housing' },
-    { label: 'Meal Plans',    prompt: 'What meal plans are available at CSUCI?',          topic: 'housing' },
-    { label: 'Roommates',     prompt: 'How does CSUCI match roommates?',                  topic: 'housing' },
-    { label: 'Resident Life', prompt: 'What is resident life like at CSUCI?',             topic: 'housing' },
-    { label: 'Maintenance',   prompt: 'How do I submit a maintenance request at CSUCI?',  topic: 'housing' },
-    { label: 'Move-In',       prompt: 'When are the move-in dates for CSUCI housing?',    topic: 'housing' },
-    { label: 'Guest Policy',  prompt: 'What is the guest policy for CSUCI housing?',      topic: 'housing' },
-    { label: 'Dining',        prompt: 'Where can I eat on campus at CSUCI?',              topic: 'housing' },
-    { label: 'Laundry',       prompt: 'Is there laundry in CSUCI housing?',               topic: 'housing' },
-    { label: 'Quiet Hours',   prompt: 'What are the quiet hours in CSUCI housing?',       topic: 'housing' },
-    { label: 'Contact',       prompt: 'How do I contact the CSUCI Housing Office?',       topic: 'housing' },
-    { label: 'Parking',       prompt: 'Is parking available for CSUCI residents?',        topic: 'housing' },
-    { label: 'Pets',          prompt: 'Are pets allowed in CSUCI housing?',               topic: 'housing' },
+    { label: 'On-Campus',     prompt: 'What on-campus housing does CSUCI offer?',          topic: 'housing' },
+    { label: 'Off-Campus',    prompt: 'Are there off-campus housing resources at CSUCI?',  topic: 'housing' },
+    { label: 'Costs',         prompt: 'How much does CSUCI housing cost?',                 topic: 'housing' },
+    { label: 'Apply',         prompt: 'How do I apply for CSUCI housing?',                 topic: 'housing' },
+    { label: 'Meal Plans',    prompt: 'What meal plans are available at CSUCI?',           topic: 'housing' },
+    { label: 'Roommates',     prompt: 'How does CSUCI match roommates?',                   topic: 'housing' },
+    { label: 'Resident Life', prompt: 'What is resident life like at CSUCI?',              topic: 'housing' },
+    { label: 'Maintenance',   prompt: 'How do I submit a maintenance request at CSUCI?',   topic: 'housing' },
+    { label: 'Move-In',       prompt: 'When are the move-in dates for CSUCI housing?',     topic: 'housing' },
+    { label: 'Guest Policy',  prompt: 'What is the guest policy for CSUCI housing?',       topic: 'housing' },
+    { label: 'Dining',        prompt: 'Where can I eat on campus at CSUCI?',               topic: 'housing' },
+    { label: 'Laundry',       prompt: 'Is there laundry in CSUCI housing?',                topic: 'housing' },
+    { label: 'Quiet Hours',   prompt: 'What are the quiet hours in CSUCI housing?',        topic: 'housing' },
+    { label: 'Contact',       prompt: 'How do I contact the CSUCI Housing Office?',        topic: 'housing' },
+    { label: 'Parking',       prompt: 'Is parking available for CSUCI residents?',         topic: 'housing' },
+    { label: 'Pets',          prompt: 'Are pets allowed in CSUCI housing?',                topic: 'housing' },
   ],
   programs: [
-    { label: 'Undergrad',     prompt: 'What undergrad majors does CSUCI offer?',               topic: 'programs' },
-    { label: 'Graduate',      prompt: 'What graduate programs does CSUCI offer?',              topic: 'programs' },
-    { label: 'Online',        prompt: 'Does CSUCI offer online degrees?',                      topic: 'programs' },
-    { label: 'Minors',        prompt: 'What minors does CSUCI offer?',                         topic: 'programs' },
-    { label: 'Certificates',  prompt: 'What certificates does CSUCI offer?',                   topic: 'programs' },
-    { label: 'Business',      prompt: 'What business programs does CSUCI offer?',              topic: 'programs' },
-    { label: 'STEM',          prompt: 'What STEM programs does CSUCI offer?',                  topic: 'programs' },
-    { label: 'Liberal Arts',  prompt: 'What liberal arts programs does CSUCI offer?',          topic: 'programs' },
-    { label: 'Education',     prompt: 'What education programs does CSUCI offer?',             topic: 'programs' },
-    { label: 'Nursing',       prompt: 'Does CSUCI offer nursing?',                             topic: 'programs' },
-    { label: 'CS / IT',       prompt: 'What computer science programs does CSUCI offer?',      topic: 'programs' },
-    { label: 'Psychology',    prompt: 'What psychology programs does CSUCI offer?',            topic: 'programs' },
-    { label: 'Pre-Med',       prompt: 'Does CSUCI have a pre-med track?',                      topic: 'programs' },
-    { label: 'Study Abroad',  prompt: 'What study abroad programs does CSUCI offer?',          topic: 'programs' },
-    { label: 'Research',      prompt: 'What research opportunities exist at CSUCI?',           topic: 'programs' },
-    { label: 'Class Schedule',prompt: 'How do I find the class schedule at CSUCI?',            topic: 'programs' },
+    { label: 'Undergrad',     prompt: 'What undergrad majors does CSUCI offer?',                topic: 'programs' },
+    { label: 'Graduate',      prompt: 'What graduate programs does CSUCI offer?',               topic: 'programs' },
+    { label: 'Online',        prompt: 'Does CSUCI offer online degrees?',                       topic: 'programs' },
+    { label: 'Minors',        prompt: 'What minors does CSUCI offer?',                          topic: 'programs' },
+    { label: 'Certificates',  prompt: 'What certificates does CSUCI offer?',                    topic: 'programs' },
+    { label: 'Business',      prompt: 'What business programs does CSUCI offer?',               topic: 'programs' },
+    { label: 'STEM',          prompt: 'What STEM programs does CSUCI offer?',                   topic: 'programs' },
+    { label: 'Liberal Arts',  prompt: 'What liberal arts programs does CSUCI offer?',           topic: 'programs' },
+    { label: 'Education',     prompt: 'What education programs does CSUCI offer?',              topic: 'programs' },
+    { label: 'Nursing',       prompt: 'Does CSUCI offer nursing?',                              topic: 'programs' },
+    { label: 'CS / IT',       prompt: 'What computer science programs does CSUCI offer?',       topic: 'programs' },
+    { label: 'Psychology',    prompt: 'What psychology programs does CSUCI offer?',             topic: 'programs' },
+    { label: 'Pre-Med',       prompt: 'Does CSUCI have a pre-med track?',                       topic: 'programs' },
+    { label: 'Study Abroad',  prompt: 'What study abroad programs does CSUCI offer?',           topic: 'programs' },
+    { label: 'Research',      prompt: 'What research opportunities exist at CSUCI?',            topic: 'programs' },
+    { label: 'Class Schedule',prompt: 'How do I find the class schedule at CSUCI?',             topic: 'programs' },
   ],
   departments: [
-    { label: 'Admissions',    prompt: 'How do I contact CSUCI Admissions? Include phone and email.',    topic: 'departments' },
-    { label: 'Financial Aid', prompt: 'How do I contact CSUCI Financial Aid? Include phone and email.', topic: 'departments' },
-    { label: 'Registrar',     prompt: 'How do I contact the CSUCI Registrar? Include phone and email.', topic: 'departments' },
-    { label: 'IT Help Desk',  prompt: 'How do I contact the CSUCI IT Help Desk?',                      topic: 'departments' },
-    { label: 'Health Ctr',    prompt: 'How do I contact CSUCI Student Health Services?',               topic: 'departments' },
-    { label: 'Housing',       prompt: 'How do I contact the CSUCI Housing Office?',                    topic: 'departments' },
-    { label: 'Advising',      prompt: 'How do I contact Academic Advising at CSUCI?',                  topic: 'departments' },
-    { label: 'Campus Police', prompt: 'How do I contact CSUCI Campus Police?',                         topic: 'departments' },
-    { label: 'Library',       prompt: 'How do I contact the CSUCI library?',                           topic: 'departments' },
-    { label: 'Career Ctr',    prompt: 'How do I contact the CSUCI Career Center?',                     topic: 'departments' },
-    { label: 'Counseling',    prompt: 'How do I contact CSUCI Student Counseling?',                    topic: 'departments' },
-    { label: 'Disability',    prompt: 'How do I contact CSUCI Disability Services?',                   topic: 'departments' },
-    { label: 'President',     prompt: 'Who is the president of CSUCI?',                                topic: 'departments' },
-    { label: 'Parking Svcs',  prompt: 'How do I contact CSUCI Parking Services?',                     topic: 'departments' },
-    { label: 'Dean Office',   prompt: 'How do I contact the Dean of Students at CSUCI?',              topic: 'departments' },
-    { label: 'Cashier',       prompt: 'How do I contact CSUCI Student Business Services?',            topic: 'departments' },
+    { label: 'Admissions',    prompt: 'How do I contact CSUCI Admissions? Include phone and email.',     topic: 'departments' },
+    { label: 'Financial Aid', prompt: 'How do I contact CSUCI Financial Aid? Include phone and email.',  topic: 'departments' },
+    { label: 'Registrar',     prompt: 'How do I contact the CSUCI Registrar? Include phone and email.',  topic: 'departments' },
+    { label: 'IT Help Desk',  prompt: 'How do I contact the CSUCI IT Help Desk?',                       topic: 'departments' },
+    { label: 'Health Ctr',    prompt: 'How do I contact CSUCI Student Health Services?',                topic: 'departments' },
+    { label: 'Housing',       prompt: 'How do I contact the CSUCI Housing Office?',                     topic: 'departments' },
+    { label: 'Advising',      prompt: 'How do I contact Academic Advising at CSUCI?',                   topic: 'departments' },
+    { label: 'Campus Police', prompt: 'How do I contact CSUCI Campus Police?',                          topic: 'departments' },
+    { label: 'Library',       prompt: 'How do I contact the CSUCI library?',                            topic: 'departments' },
+    { label: 'Career Ctr',    prompt: 'How do I contact the CSUCI Career Center?',                      topic: 'departments' },
+    { label: 'Counseling',    prompt: 'How do I contact CSUCI Student Counseling?',                     topic: 'departments' },
+    { label: 'Disability',    prompt: 'How do I contact CSUCI Disability Services?',                    topic: 'departments' },
+    { label: 'President',     prompt: 'Who is the president of CSUCI?',                                 topic: 'departments' },
+    { label: 'Parking Svcs',  prompt: 'How do I contact CSUCI Parking Services?',                      topic: 'departments' },
+    { label: 'Dean Office',   prompt: 'How do I contact the Dean of Students at CSUCI?',               topic: 'departments' },
+    { label: 'Cashier',       prompt: 'How do I contact CSUCI Student Business Services?',             topic: 'departments' },
   ],
   parking: [
-    { label: 'Buy Permit',    prompt: 'How do I buy a parking permit at CSUCI?',           topic: 'parking' },
-    { label: 'Visitor',       prompt: 'Where can visitors park at CSUCI?',                 topic: 'parking' },
-    { label: 'Campus Map',    prompt: 'Where can I find a campus map for CSUCI?',          topic: 'parking' },
-    { label: 'ADA Parking',   prompt: 'Where is ADA parking at CSUCI?',                   topic: 'parking' },
-    { label: 'EV Charging',   prompt: 'Does CSUCI have EV charging stations?',            topic: 'parking' },
-    { label: 'Citations',     prompt: 'How do I dispute a parking citation at CSUCI?',    topic: 'parking' },
-    { label: 'Bike Parking',  prompt: 'Where can I park my bike at CSUCI?',               topic: 'parking' },
-    { label: 'Shuttle',       prompt: 'Does CSUCI offer a shuttle service?',              topic: 'parking' },
-    { label: 'After Hours',   prompt: 'What are parking rules after hours at CSUCI?',     topic: 'parking' },
-    { label: 'Carpool',       prompt: 'Does CSUCI offer carpool programs?',               topic: 'parking' },
-    { label: 'Daily Permit',  prompt: 'How do I buy a daily parking permit at CSUCI?',    topic: 'parking' },
-    { label: 'Overnight',     prompt: 'Is overnight parking allowed at CSUCI?',           topic: 'parking' },
-    { label: 'Lot Map',       prompt: 'Where can I find a parking lot map for CSUCI?',    topic: 'parking' },
-    { label: 'Cost',          prompt: 'How much does a parking permit cost at CSUCI?',    topic: 'parking' },
-    { label: 'Contact',       prompt: 'How do I contact CSUCI Parking Services?',         topic: 'parking' },
-    { label: 'Transit',       prompt: 'What public transit options are near CSUCI?',      topic: 'parking' },
+    { label: 'Buy Permit',    prompt: 'How do I buy a parking permit at CSUCI?',            topic: 'parking' },
+    { label: 'Visitor',       prompt: 'Where can visitors park at CSUCI?',                  topic: 'parking' },
+    { label: 'Campus Map',    prompt: 'Where can I find a campus map for CSUCI?',           topic: 'parking' },
+    { label: 'ADA Parking',   prompt: 'Where is ADA parking at CSUCI?',                    topic: 'parking' },
+    { label: 'EV Charging',   prompt: 'Does CSUCI have EV charging stations?',             topic: 'parking' },
+    { label: 'Citations',     prompt: 'How do I dispute a parking citation at CSUCI?',     topic: 'parking' },
+    { label: 'Bike Parking',  prompt: 'Where can I park my bike at CSUCI?',                topic: 'parking' },
+    { label: 'Shuttle',       prompt: 'Does CSUCI offer a shuttle service?',               topic: 'parking' },
+    { label: 'After Hours',   prompt: 'What are parking rules after hours at CSUCI?',      topic: 'parking' },
+    { label: 'Carpool',       prompt: 'Does CSUCI offer carpool programs?',                topic: 'parking' },
+    { label: 'Daily Permit',  prompt: 'How do I buy a daily parking permit at CSUCI?',     topic: 'parking' },
+    { label: 'Overnight',     prompt: 'Is overnight parking allowed at CSUCI?',            topic: 'parking' },
+    { label: 'Lot Map',       prompt: 'Where can I find a parking lot map for CSUCI?',     topic: 'parking' },
+    { label: 'Cost',          prompt: 'How much does a parking permit cost at CSUCI?',     topic: 'parking' },
+    { label: 'Contact',       prompt: 'How do I contact CSUCI Parking Services?',          topic: 'parking' },
+    { label: 'Transit',       prompt: 'What public transit options are near CSUCI?',       topic: 'parking' },
   ],
   services: [
-    { label: 'Tutoring',      prompt: 'What tutoring does CSUCI offer?',                              topic: 'services' },
-    { label: 'Writing Ctr',   prompt: 'How do I use the CSUCI writing center?',                       topic: 'services' },
-    { label: 'Disability',    prompt: 'What disability services does CSUCI provide?',                 topic: 'services' },
-    { label: 'Counseling',    prompt: 'What counseling services are at CSUCI?',                       topic: 'counseling' },
-    { label: 'Food Pantry',   prompt: 'Does CSUCI have a food pantry?',                              topic: 'services' },
-    { label: 'Career Help',   prompt: 'What career resources does CSUCI offer?',                      topic: 'services' },
-    { label: 'Library',       prompt: 'How do I access the CSUCI library?',                           topic: 'services' },
-    { label: 'Veterans',      prompt: 'What services does CSUCI offer for veterans?',                 topic: 'services' },
-    { label: 'LGBTQ+',        prompt: 'What LGBTQ+ support is available at CSUCI?',                  topic: 'services' },
-    { label: 'International', prompt: 'What services exist for international students at CSUCI?',     topic: 'services' },
-    { label: 'Health',        prompt: 'What student health services does CSUCI offer?',               topic: 'services' },
-    { label: 'Math Help',     prompt: 'Does CSUCI have a math tutoring center?',                     topic: 'services' },
-    { label: 'Tech Support',  prompt: 'How do I get tech support as a student at CSUCI?',            topic: 'services' },
-    { label: 'Printing',      prompt: 'Where can I print on campus at CSUCI?',                       topic: 'services' },
-    { label: 'Child Care',    prompt: 'Does CSUCI offer child care for student parents?',            topic: 'services' },
-    { label: 'Lost & Found',  prompt: 'Where is the lost and found at CSUCI?',                       topic: 'services' },
+    { label: 'Tutoring',      prompt: 'What tutoring does CSUCI offer?',                               topic: 'services' },
+    { label: 'Writing Ctr',   prompt: 'How do I use the CSUCI writing center?',                        topic: 'services' },
+    { label: 'Disability',    prompt: 'What disability services does CSUCI provide?',                  topic: 'services' },
+    { label: 'Counseling',    prompt: 'What counseling services are at CSUCI?',                        topic: 'counseling' },
+    { label: 'Food Pantry',   prompt: 'Does CSUCI have a food pantry?',                               topic: 'services' },
+    { label: 'Career Help',   prompt: 'What career resources does CSUCI offer?',                       topic: 'services' },
+    { label: 'Library',       prompt: 'How do I access the CSUCI library?',                            topic: 'services' },
+    { label: 'Veterans',      prompt: 'What services does CSUCI offer for veterans?',                  topic: 'services' },
+    { label: 'LGBTQ+',        prompt: 'What LGBTQ+ support is available at CSUCI?',                   topic: 'services' },
+    { label: 'International', prompt: 'What services exist for international students at CSUCI?',      topic: 'services' },
+    { label: 'Health',        prompt: 'What student health services does CSUCI offer?',                topic: 'services' },
+    { label: 'Math Help',     prompt: 'Does CSUCI have a math tutoring center?',                      topic: 'services' },
+    { label: 'Tech Support',  prompt: 'How do I get tech support as a student at CSUCI?',             topic: 'services' },
+    { label: 'Printing',      prompt: 'Where can I print on campus at CSUCI?',                        topic: 'services' },
+    { label: 'Child Care',    prompt: 'Does CSUCI offer child care for student parents?',             topic: 'services' },
+    { label: 'Lost & Found',  prompt: 'Where is the lost and found at CSUCI?',                        topic: 'services' },
   ],
 };
 
@@ -495,18 +479,16 @@ function detectChipSet(t) {
 const launcher = document.createElement('div');
 launcher.id = 'ekho-launcher';
 
-// Speech bubble — appears above the circle
 const speech = document.createElement('div');
 speech.id = 'ekho-speech';
 speech.textContent = 'Need some help? 🐬';
-speech.onclick = openChat;
+speech.onclick = () => openChat();
 
-// Red circle bubble
 const bubble = document.createElement('div');
 bubble.id = 'ekho-bubble';
 bubble.title = 'Chat with EkhoBot';
 bubble.innerHTML = dolphinBubble;
-bubble.onclick = openChat;
+bubble.onclick = () => openChat();
 
 launcher.appendChild(speech);
 launcher.appendChild(bubble);
@@ -536,10 +518,31 @@ win.innerHTML = `
 document.body.appendChild(launcher);
 document.body.appendChild(win);
 
-function openChat() {
+// --- Alert system ---
+function setAlert(message) {
+  const alertBar = document.getElementById('ekho-alert');
+  if (message) {
+    alertBar.textContent = '🚨 ' + message;
+    alertBar.style.display = 'block';
+  } else {
+    alertBar.style.display = 'none';
+  }
+}
+
+async function openChat() {
   win.style.display = 'flex';
   win.style.flexDirection = 'column';
   launcher.classList.add('hidden');
+
+  // Check for active alerts from backend
+  try {
+    const res = await fetch('http://localhost:3000/alert');
+    const data = await res.json();
+    setAlert(data.alert);
+  } catch (e) {
+    // Silent fail if backend unreachable
+  }
+
   if (!chatInitialized) {
     chatInitialized = true;
     addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?\n\nTambién puedo ayudarte en español.");
@@ -555,7 +558,16 @@ function closeChat() {
 
 document.getElementById('ekho-close').onclick = closeChat;
 document.getElementById('ekho-send').onclick = sendMessage;
-document.getElementById('ekho-input').onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
+document.getElementById('ekho-input').onkeydown = e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendMessage();
+  }
+  // Allow all other keys including arrow keys to work normally
+};
+document.getElementById('ekho-input').addEventListener('keydown', e => {
+  e.stopPropagation();
+});
 
 function renderChips(topicKey, expanded) {
   currentTopic = topicKey;
@@ -621,6 +633,16 @@ function addChipBtn(bar, chip) {
   bar.appendChild(btn);
 }
 
+const socialMap = {
+  'instagram: @csuci':              'https://www.instagram.com/csuci',
+  'twitter/x: @csuci':              'https://twitter.com/csuci',
+  'twitter: @csuci':                'https://twitter.com/csuci',
+  'facebook: csu channel islands':  'https://www.facebook.com/CSUChannelIslands',
+  'youtube: youtube.com/user/ciwatch': 'https://www.youtube.com/user/ciwatch',
+  'pinterest: @csuci':              'https://www.pinterest.com/csuci',
+  '@csuci':                         'https://www.instagram.com/csuci',
+};
+
 function addBotMessage(text) {
   const msgs = document.getElementById('ekho-messages');
   const row = document.createElement('div');
@@ -631,34 +653,19 @@ function addBotMessage(text) {
   const msg = document.createElement('div');
   msg.className = 'ekho-msg bot';
 
-  const socialMap = {
-    '@csuci':              'https://www.instagram.com/csuci',
-    'instagram: @csuci':   'https://www.instagram.com/csuci',
-    'twitter/x: @csuci':   'https://twitter.com/csuci',
-    'twitter: @csuci':     'https://twitter.com/csuci',
-    'facebook: csu channel islands': 'https://www.facebook.com/CSUChannelIslands',
-    'youtube: youtube.com/user/ciwatch': 'https://www.youtube.com/user/ciwatch',
-    'pinterest: @csuci':   'https://www.pinterest.com/csuci',
-  };
-
   text.split('\n').forEach((line, i) => {
     if (i > 0) msg.appendChild(document.createElement('br'));
-
     const lineLower = line.toLowerCase().trim();
 
-    // Check if this line is a social media line
     let matched = false;
     for (const [key, url] of Object.entries(socialMap)) {
       if (lineLower.includes(key)) {
-        // Split into label and handle
         const colonIdx = line.indexOf(':');
         if (colonIdx !== -1) {
-          const label = line.slice(0, colonIdx + 1) + ' ';
-          const handle = line.slice(colonIdx + 1).trim();
-          msg.appendChild(document.createTextNode(label));
+          msg.appendChild(document.createTextNode(line.slice(0, colonIdx + 1) + ' '));
           const a = document.createElement('a');
           a.href = url;
-          a.textContent = handle;
+          a.textContent = line.slice(colonIdx + 1).trim();
           a.target = '_blank';
           a.style.cssText = 'color:#C8102E;font-weight:600;text-decoration:none;';
           a.onmouseover = () => a.style.textDecoration = 'underline';
@@ -671,14 +678,12 @@ function addBotMessage(text) {
     }
 
     if (!matched) {
-      // Auto-link URLs
       if (line.match(/https?:\/\/|www\.|csuci\.edu/i)) {
         const parts = line.split(/((?:https?:\/\/|www\.)\S+|csuci\.edu\S*)/gi);
         parts.forEach(part => {
           if (part.match(/https?:\/\/|www\.|csuci\.edu/i)) {
             const a = document.createElement('a');
-            const href = part.startsWith('http') ? part : 'https://' + part;
-            a.href = href;
+            a.href = part.startsWith('http') ? part : 'https://' + part;
             a.textContent = part;
             a.target = '_blank';
             a.style.cssText = 'color:#C8102E;text-decoration:underline;word-break:break-all;';
