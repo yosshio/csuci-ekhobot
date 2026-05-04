@@ -1,24 +1,64 @@
-const BACKEND_URL = 'http://localhost:3000/chat';
-let history = [];
-let currentTopic = 'root';
-let chipsExpanded = false;
-let chatInitialized = false;
-let currentLanguage = 'en';
+/*
+================================================================================
+EKHOBOT CHAT WIDGET
+================================================================================
+Frontend chat interface for EkhoBot virtual assistant.
 
+Features:
+  - Floating chat bubble launcher with speech bubble
+  - Topic-based quick-reply chips for common questions
+  - Alert system integration for campus notifications
+  - Automatic URL and social media link detection
+  - Mobile-responsive design
+  - Multi-language support (partial implementation)
+
+Usage: Include this file in any CSUCI webpage to add EkhoBot chat
+================================================================================
+*/
+
+/*
+================================================================================
+CONFIGURATION
+================================================================================
+*/
+
+const BACKEND_URL = 'http://localhost:3000/chat';
+
+// Conversation state
+let history = [];           // Chat message history for Claude API
+let currentTopic = 'root';  // Current chip category being displayed
+let chipsExpanded = false;  // Whether chip bar is showing all chips
+let chatInitialized = false; // Whether initial greeting has been shown
+let currentLanguage = 'en'; // Current language (NOTE: not fully implemented)
+
+/*
+Language picker options
+NOTE: This is a simplified version. Full multilingual support with
+translated chips and persistent language state is not yet implemented.
+*/
 const LANGUAGE_PICKER = [
   { label: 'Español',    code: 'es', prompt: 'Respóndeme en español de ahora en adelante.' },
   { label: 'English',    code: 'en', prompt: 'Please respond in English from now on.' },
 ];
 
+// Hints shown after language selection
 const LANG_HINTS = {
   es: 'Para volver al inglés, escribe "English" abajo',
   en: ''
 };
 
+/*
+================================================================================
+STYLES
+================================================================================
+All CSS for the chat widget is injected dynamically
+*/
+
 const style = document.createElement('style');
 style.textContent = `
   @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;500;600&display=swap');
 
+  /* Launcher: floating bubble + speech bubble */
   #ekho-launcher {
     position: fixed; bottom: 24px; right: 24px; z-index: 9999;
     display: flex; flex-direction: row; align-items: flex-end; gap: 10px;
@@ -26,6 +66,7 @@ style.textContent = `
   }
   #ekho-launcher.hidden { opacity: 0; pointer-events: none; }
 
+  /* Speech bubble */
   #ekho-speech {
     background: #fff;
     color: #1a1a1a;
@@ -43,6 +84,7 @@ style.textContent = `
     animation: ekho-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     transform-origin: center right;
   }
+  /* Speech bubble tail */
   #ekho-speech::after {
     content: '';
     position: absolute;
@@ -57,6 +99,7 @@ style.textContent = `
     100% { opacity: 1; transform: scale(1); }
   }
 
+  /* Chat bubble button */
   #ekho-bubble {
     width: 60px; height: 60px; border-radius: 50%;
     background: #C8102E;
@@ -69,6 +112,7 @@ style.textContent = `
   }
   #ekho-bubble:hover { background: #a00d24; transform: scale(1.06); }
 
+  /* Chat window */
   #ekho-window {
     position: fixed;
     bottom: 0; right: 0;
@@ -85,6 +129,7 @@ style.textContent = `
     z-index: 9998;
   }
 
+  /* Desktop responsive sizing */
   @media (min-width: 600px) {
     #ekho-window {
       bottom: 24px; right: 24px;
@@ -103,6 +148,7 @@ style.textContent = `
     }
   }
 
+  /* Alert banner */
   #ekho-alert {
     background: #C8102E;
     color: #fff;
@@ -121,6 +167,7 @@ style.textContent = `
     50% { opacity: 0.85; }
   }
 
+  /* Header */
   #ekho-header {
     background: #C8102E;
     padding: 0 18px; height: 58px;
@@ -153,6 +200,7 @@ style.textContent = `
   }
   #ekho-close:hover { color: #fff; }
 
+  /* Messages area */
   #ekho-messages {
     flex: 1;
     overflow-y: auto;
@@ -165,11 +213,13 @@ style.textContent = `
     scrollbar-color: #E8E9EA transparent;
     min-height: 0;
   }
+  /* Push messages to bottom */
   #ekho-messages::before {
     content: '';
     flex: 1;
   }
 
+  /* Message rows */
   .ekho-row { display: flex; align-items: flex-end; gap: 6px; padding: 0 2px; }
   .ekho-row.user { flex-direction: row-reverse; padding: 0; }
 
@@ -179,6 +229,7 @@ style.textContent = `
     display: flex; align-items: center; justify-content: center;
   }
 
+  /* Message bubbles */
   .ekho-msg {
     max-width: 80%; padding: 9px 13px;
     font-size: 14px; line-height: 1.55; border-radius: 14px;
@@ -203,6 +254,7 @@ style.textContent = `
     border-bottom-left-radius: 3px; font-size: 13px;
   }
 
+  /* Chip bar (quick replies) */
   #ekho-chip-bar {
     padding: 6px 8px; background: #fff;
     border-top: 1px solid #E8E9EA;
@@ -212,6 +264,7 @@ style.textContent = `
     flex-shrink: 0;
   }
 
+  /* Individual chips */
   .ekho-chip {
     font-size: 11px; padding: 5px 2px; border-radius: 20px;
     border: 1.5px solid #C8102E; color: #C8102E;
@@ -226,6 +279,7 @@ style.textContent = `
   .ekho-chip.future { border-color: #A7A9AC; color: #A7A9AC; background: #F7F7F8; }
   .ekho-chip.future:hover { background: #A7A9AC; color: #fff; border-color: #A7A9AC; }
 
+  /* Input area */
   #ekho-input-area {
     padding: 9px 12px; background: #fff;
     display: flex; gap: 8px; align-items: center;
@@ -250,6 +304,7 @@ style.textContent = `
   }
   #ekho-send:hover { background: #a00d24; }
 
+  /* Typing indicator */
   .ekho-typing {
     display: flex; gap: 3px; align-items: center;
     padding: 9px 13px; background: #fff;
@@ -266,9 +321,27 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+/*
+================================================================================
+SVG ICONS
+================================================================================
+Dolphin icons in different colors for different contexts
+*/
+
 const dolphinWhite = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const dolphinRed = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const dolphinBubble = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/*
+================================================================================
+CHIP SETS (QUICK REPLY OPTIONS)
+================================================================================
+Organized by topic. Each chip has:
+  - label: Text shown on button
+  - prompt: Full question sent to backend (more context than label)
+  - topic: Which chip set to show after response
+  - future: Boolean, shows "coming soon" message
+*/
 
 const CHIP_SETS = {
   root: [
@@ -489,6 +562,22 @@ const CHIP_SETS = {
   ],
 };
 
+/*
+================================================================================
+CHIP SET DETECTION
+================================================================================
+*/
+
+/*
+FUNCTION: detectChipSet
+PURPOSE: Analyze bot response and determine which chip set to display next
+PARAMETERS: t (string) - Bot's response text
+RETURNS: String key for CHIP_SETS
+
+This function matches keywords in the bot's response to automatically
+show relevant follow-up chips. For example, if the bot mentions "advising"
+the chip bar switches to show advising-related chips.
+*/
 function detectChipSet(t) {
   t = t.toLowerCase();
   if (t.match(/advis|degree plan|change major|graduation req|add.drop|transfer credit|waitlist|units/)) return 'advising';
@@ -505,7 +594,14 @@ function detectChipSet(t) {
   return 'root';
 }
 
-// --- Build DOM ---
+/*
+================================================================================
+DOM CREATION
+================================================================================
+Build the chat widget UI elements
+*/
+
+// Launcher (speech bubble + chat bubble)
 const launcher = document.createElement('div');
 launcher.id = 'ekho-launcher';
 
@@ -523,6 +619,7 @@ bubble.onclick = () => openChat();
 launcher.appendChild(speech);
 launcher.appendChild(bubble);
 
+// Chat window
 const win = document.createElement('div');
 win.id = 'ekho-window';
 win.innerHTML = `
@@ -548,7 +645,17 @@ win.innerHTML = `
 document.body.appendChild(launcher);
 document.body.appendChild(win);
 
-// --- Alert system ---
+/*
+================================================================================
+ALERT SYSTEM
+================================================================================
+*/
+
+/*
+FUNCTION: setAlert
+PURPOSE: Display or hide campus-wide alert banner
+PARAMETERS: message (string) - Alert text, empty string to hide
+*/
 function setAlert(message) {
   const alertBar = document.getElementById('ekho-alert');
   if (message) {
@@ -559,12 +666,22 @@ function setAlert(message) {
   }
 }
 
+/*
+================================================================================
+CHAT WINDOW CONTROLS
+================================================================================
+*/
+
+/*
+FUNCTION: openChat
+PURPOSE: Show chat window and check for active alerts
+*/
 async function openChat() {
   win.style.display = 'flex';
   win.style.flexDirection = 'column';
   launcher.classList.add('hidden');
 
-  // Check for active alerts from backend
+  // Fetch active alerts from backend
   try {
     const res = await fetch('http://localhost:3000/alert');
     const data = await res.json();
@@ -573,6 +690,7 @@ async function openChat() {
     // Silent fail if backend unreachable
   }
 
+  // Show welcome message on first open
   if (!chatInitialized) {
     chatInitialized = true;
     addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?\n\nTambién puedo ayudarte en español.");
@@ -581,11 +699,16 @@ async function openChat() {
   }
 }
 
+/*
+FUNCTION: closeChat
+PURPOSE: Hide chat window and show launcher
+*/
 function closeChat() {
   win.style.display = 'none';
   launcher.classList.remove('hidden');
 }
 
+// Event listeners
 document.getElementById('ekho-close').onclick = closeChat;
 document.getElementById('ekho-send').onclick = sendMessage;
 document.getElementById('ekho-input').onkeydown = e => {
@@ -593,12 +716,24 @@ document.getElementById('ekho-input').onkeydown = e => {
     e.preventDefault();
     sendMessage();
   }
-  // Allows all other keys including arrow keys to work normally
 };
+// Prevent keyboard shortcuts from affecting parent page
 document.getElementById('ekho-input').addEventListener('keydown', e => {
   e.stopPropagation();
 });
 
+/*
+================================================================================
+CHIP RENDERING
+================================================================================
+*/
+
+/*
+FUNCTION: renderChips
+PURPOSE: Display chip buttons for a given topic
+PARAMETERS: topicKey (string) - Key for CHIP_SETS
+            expanded (boolean) - Show all chips or just first 6
+*/
 function renderChips(topicKey, expanded) {
   currentTopic = topicKey;
   chipsExpanded = expanded;
@@ -608,12 +743,15 @@ function renderChips(topicKey, expanded) {
   const isSubMenu = topicKey !== 'root';
 
   if (!expanded) {
+    // Show first 6 chips + More button + Back button (if submenu)
     chips.slice(0, 6).forEach(c => addChipBtn(bar, c));
+    
     const more = document.createElement('button');
     more.className = 'ekho-chip secondary';
     more.textContent = 'More...';
     more.onclick = () => renderChips(topicKey, true);
     bar.appendChild(more);
+    
     if (isSubMenu) {
       const back = document.createElement('button');
       back.className = 'ekho-chip secondary';
@@ -621,13 +759,17 @@ function renderChips(topicKey, expanded) {
       back.onclick = () => renderChips('root', false);
       bar.appendChild(back);
     } else {
-      bar.appendChild(document.createElement('div'));
+      bar.appendChild(document.createElement('div')); // Empty space
     }
   } else {
+    // Show all chips in 4-column grid
     const all = [...chips];
     if (isSubMenu) all.push({ label: '← Back', isBack: true });
+    
+    // Pad to fill grid evenly
     const rem = all.length % 4;
     const pad = rem === 0 ? 0 : 4 - rem;
+    
     all.forEach(c => {
       if (c.isBack) {
         const b = document.createElement('button');
@@ -639,19 +781,30 @@ function renderChips(topicKey, expanded) {
         addChipBtn(bar, c);
       }
     });
+    
+    // Add empty divs for padding
     for (let i = 0; i < pad; i++) bar.appendChild(document.createElement('div'));
   }
 }
 
+/*
+FUNCTION: addChipBtn
+PURPOSE: Create and append a single chip button
+PARAMETERS: bar (element) - Container to append to
+            chip (object) - Chip configuration
+*/
 function addChipBtn(bar, chip) {
   const { label, prompt, topic, future } = chip;
   const btn = document.createElement('button');
   btn.textContent = label;
   btn.title = label;
+  
   if (future) {
+    // Coming soon feature
     btn.className = 'ekho-chip future';
     btn.onclick = () => addComingSoon(label);
   } else {
+    // Normal chip
     btn.className = 'ekho-chip';
     btn.onclick = () => {
       addUserMessage(label);
@@ -660,14 +813,24 @@ function addChipBtn(bar, chip) {
       fetchReply(topic);
     };
   }
+  
+  // NOTE: Language picker not fully implemented
+  // This code path is never reached because no chips have isLang property
   if (chip.isLang) {
     btn.onclick = () => {
-    renderLanguagePicker();
-  };
-}
+      renderLanguagePicker();
+    };
+  }
+  
   bar.appendChild(btn);
 }
 
+/*
+================================================================================
+SOCIAL MEDIA LINK DETECTION
+================================================================================
+Map of social media patterns to URLs for automatic linking
+*/
 const socialMap = {
   'instagram: @csuci':              'https://www.instagram.com/csuci',
   'twitter/x: @csuci':              'https://twitter.com/csuci',
@@ -678,25 +841,44 @@ const socialMap = {
   '@csuci':                         'https://www.instagram.com/csuci',
 };
 
+/*
+================================================================================
+MESSAGE DISPLAY FUNCTIONS
+================================================================================
+*/
+
+/*
+FUNCTION: addBotMessage
+PURPOSE: Display bot message with automatic link detection
+PARAMETERS: text (string) - Message text with newlines
+
+Automatically converts URLs and social media mentions into clickable links
+*/
 function addBotMessage(text) {
   const msgs = document.getElementById('ekho-messages');
   const row = document.createElement('div');
   row.className = 'ekho-row';
+  
   const avatar = document.createElement('div');
   avatar.className = 'ekho-avatar';
   avatar.innerHTML = dolphinWhite;
+  
   const msg = document.createElement('div');
   msg.className = 'ekho-msg bot';
 
+  // Process each line separately to preserve line breaks
   text.split('\n').forEach((line, i) => {
     if (i > 0) msg.appendChild(document.createElement('br'));
+    
     const lineLower = line.toLowerCase().trim();
-
     let matched = false;
+
+    // Check for social media patterns
     for (const [key, url] of Object.entries(socialMap)) {
       if (lineLower.includes(key)) {
         const colonIdx = line.indexOf(':');
         if (colonIdx !== -1) {
+          // Split at colon and make second part a link
           msg.appendChild(document.createTextNode(line.slice(0, colonIdx + 1) + ' '));
           const a = document.createElement('a');
           a.href = url;
@@ -712,8 +894,10 @@ function addBotMessage(text) {
       }
     }
 
+    // If no social media match, check for regular URLs
     if (!matched) {
       if (line.match(/https?:\/\/|www\.|csuci\.edu/i)) {
+        // Split line by URLs and linkify them
         const parts = line.split(/((?:https?:\/\/|www\.)\S+|csuci\.edu\S*)/gi);
         parts.forEach(part => {
           if (part.match(/https?:\/\/|www\.|csuci\.edu/i)) {
@@ -728,6 +912,7 @@ function addBotMessage(text) {
           }
         });
       } else {
+        // Plain text line
         msg.appendChild(document.createTextNode(line));
       }
     }
@@ -739,22 +924,35 @@ function addBotMessage(text) {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+/*
+FUNCTION: addComingSoon
+PURPOSE: Display "coming soon" message for unimplemented features
+PARAMETERS: name (string) - Feature name
+*/
 function addComingSoon(name) {
   const msgs = document.getElementById('ekho-messages');
   const row = document.createElement('div');
   row.className = 'ekho-row';
+  
   const avatar = document.createElement('div');
   avatar.className = 'ekho-avatar';
   avatar.innerHTML = dolphinWhite;
+  
   const msg = document.createElement('div');
   msg.className = 'ekho-msg coming-soon';
   msg.textContent = `${name} is coming soon — this feature is in development.`;
+  
   row.appendChild(avatar);
   row.appendChild(msg);
   msgs.appendChild(row);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+/*
+FUNCTION: addHint
+PURPOSE: Display grey hint text message
+PARAMETERS: text (string) - Hint text
+*/
 function addHint(text) {
   const msgs = document.getElementById('ekho-messages');
   const msg = document.createElement('div');
@@ -764,43 +962,72 @@ function addHint(text) {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+/*
+FUNCTION: addUserMessage
+PURPOSE: Display user message (right-aligned, red background)
+PARAMETERS: text (string) - User's message
+*/
 function addUserMessage(text) {
   const msgs = document.getElementById('ekho-messages');
   const row = document.createElement('div');
   row.className = 'ekho-row user';
+  
   const msg = document.createElement('div');
   msg.className = 'ekho-msg user';
   msg.textContent = text;
+  
   row.appendChild(msg);
   msgs.appendChild(row);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+/*
+FUNCTION: showTyping
+PURPOSE: Display animated typing indicator
+*/
 function showTyping() {
   const msgs = document.getElementById('ekho-messages');
   const row = document.createElement('div');
   row.className = 'ekho-row';
   row.id = 'ekho-typing-row';
+  
   const avatar = document.createElement('div');
   avatar.className = 'ekho-avatar';
   avatar.innerHTML = dolphinWhite;
+  
   const typing = document.createElement('div');
   typing.className = 'ekho-typing';
   typing.innerHTML = '<span></span><span></span><span></span>';
+  
   row.appendChild(avatar);
   row.appendChild(typing);
   msgs.appendChild(row);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+/*
+FUNCTION: removeTyping
+PURPOSE: Remove typing indicator
+*/
 function removeTyping() {
   document.getElementById('ekho-typing-row')?.remove();
 }
 
+/*
+================================================================================
+MESSAGE SENDING
+================================================================================
+*/
+
+/*
+FUNCTION: sendMessage
+PURPOSE: Send user's typed message to backend
+*/
 async function sendMessage() {
   const input = document.getElementById('ekho-input');
   const text = input.value.trim();
   if (!text) return;
+  
   input.value = '';
   addUserMessage(text);
   history.push({ role: 'user', content: text });
@@ -808,6 +1035,11 @@ async function sendMessage() {
   await fetchReply(null);
 }
 
+/*
+FUNCTION: fetchReply
+PURPOSE: Call backend API and display response
+PARAMETERS: forcedTopic (string|null) - Override chip detection
+*/
 async function fetchReply(forcedTopic) {
   try {
     const res = await fetch(BACKEND_URL, {
@@ -815,11 +1047,15 @@ async function fetchReply(forcedTopic) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: history })
     });
+    
     const data = await res.json();
     removeTyping();
     addBotMessage(data.reply);
     history.push({ role: 'assistant', content: data.reply });
+    
+    // Show relevant chips based on response or forced topic
     renderChips(forcedTopic || detectChipSet(data.reply), false);
+    
   } catch (e) {
     removeTyping();
     addBotMessage('EkhoBot is offline right now. Try again shortly!');
@@ -827,9 +1063,23 @@ async function fetchReply(forcedTopic) {
   }
 }
 
+/*
+================================================================================
+LANGUAGE PICKER (PARTIAL IMPLEMENTATION)
+================================================================================
+NOTE: This feature is not fully implemented. The full multilingual system
+would require translated chip sets and persistent language state.
+*/
+
+/*
+FUNCTION: renderLanguagePicker
+PURPOSE: Display simple language selection buttons
+NOTE: Currently only shows English and Spanish
+*/
 function renderLanguagePicker() {
   const bar = document.getElementById('ekho-chip-bar');
   bar.innerHTML = '';
+  
   LANGUAGE_PICKER.forEach(lang => {
     const btn = document.createElement('button');
     btn.className = 'ekho-chip lang';
@@ -840,6 +1090,8 @@ function renderLanguagePicker() {
       history.push({ role: 'user', content: lang.prompt });
       showTyping();
       fetchReply('root');
+      
+      // Show hint about switching back
       if (lang.code !== 'en') {
         addLangHint(LANG_HINTS[lang.code]);
       }
@@ -848,6 +1100,11 @@ function renderLanguagePicker() {
   });
 }
 
+/*
+FUNCTION: addLangHint
+PURPOSE: Display language hint message
+PARAMETERS: text (string) - Hint text
+*/
 function addLangHint(text) {
   const msgs = document.getElementById('ekho-messages');
   const msg = document.createElement('div');

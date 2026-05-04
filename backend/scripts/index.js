@@ -1,13 +1,47 @@
+/*
+================================================================================
+EKHOBOT WEB CRAWLER AND INDEXER
+================================================================================
+Crawls CSUCI website, extracts text, generates embeddings, stores in database.
+
+Process:
+  1. Fetch URLs from sitemap.xml
+  2. Visit each page and extract clean text
+  3. Split text into 800-character chunks
+  4. Generate vector embeddings for each chunk
+  5. Save to PostgreSQL database with pgvector
+
+Run: node scripts/index.js
+================================================================================
+*/
+
 import 'dotenv/config';
 import * as cheerio from 'cheerio';
 import pg from 'pg';
 import { pipeline } from '@xenova/transformers';
 import pdfParse from 'pdf-parse-new';
 
+/*
+================================================================================
+DATABASE CONNECTION
+================================================================================
+*/
 const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await db.connect();
 
+/*
+================================================================================
+EMBEDDING MODEL
+================================================================================
+Local AI model for text-to-vector conversion (no API key needed)
+*/
 let embedder = null;
+
+/*
+FUNCTION: loadEmbedder
+PURPOSE: Load and cache the embedding model
+RETURNS: The loaded pipeline
+*/
 async function loadEmbedder() {
   if (!embedder) {
     console.log('Loading embedding model (first run only, downloads ~25MB)...');
@@ -17,58 +51,122 @@ async function loadEmbedder() {
   return embedder;
 }
 
+/*
+================================================================================
+SITEMAP FETCHING
+================================================================================
+*/
+
+/*
+FUNCTION: getSitemapUrls
+PURPOSE: Download and parse all URLs from CSUCI sitemap
+RETURNS: Array of clean URLs ready to crawl
+*/
 async function getSitemapUrls() {
   try {
     console.log('Fetching sitemap...');
     const res = await fetch('https://www.csuci.edu/sitemap.xml');
     const xml = await res.text();
+    
+    // Extract all <loc>URL</loc> tags
     const matches = xml.match(/<loc>(.*?)<\/loc>/g) || [];
+    
     const urls = matches
-      .map(m => m.replace(/<\/?loc>/g, '').trim())
+      .map(m => m.replace(/<\/?loc>/g, '').trim())  // Remove XML tags
       .filter(url =>
-        url.includes('csuci.edu') &&
-        !url.includes('?') &&
-        !url.match(/\.(pptx|docx|zip|mp4|mp3|css|js)$/i)
+        url.includes('csuci.edu') &&                // Only CSUCI
+        !url.includes('?') &&                       // No query params
+        !url.match(/\.(pptx|docx|zip|mp4|mp3|css|js)$/i)  // No media files
       );
+    
     console.log(`Found ${urls.length} URLs in sitemap\n`);
     return urls;
+    
   } catch (err) {
     console.log('Sitemap fetch failed:', err.message);
     return [];
   }
 }
 
+/*
+================================================================================
+EMBEDDING GENERATION
+================================================================================
+*/
+
+/*
+FUNCTION: getEmbedding
+PURPOSE: Convert text into 384-dimensional vector
+PARAMETERS: text (string)
+RETURNS: Array of 384 numbers
+*/
 async function getEmbedding(text) {
   const model = await loadEmbedder();
+  
+  // Limit to 8000 chars to avoid model limits
   const output = await model(text.slice(0, 8000), {
-    pooling: 'mean',
-    normalize: true
+    pooling: 'mean',      // Average token embeddings
+    normalize: true       // Normalize for cosine similarity
   });
+  
   return Array.from(output.data);
 }
 
+/*
+================================================================================
+TEXT PROCESSING
+================================================================================
+*/
+
+/*
+FUNCTION: chunkText
+PURPOSE: Split long text into 800-char chunks for better embeddings
+PARAMETERS: text (string), size (number, default 800)
+RETURNS: Array of text chunks
+*/
 function chunkText(text, size = CHUNK_SIZE) {
   const chunks = [];
+  
   for (let i = 0; i < text.length; i += size) {
     const chunk = text.slice(i, i + size).trim();
-    if (chunk.length > 50) chunks.push(chunk);
+    if (chunk.length > 50) chunks.push(chunk);  // Skip tiny fragments
   }
+  
   return chunks;
 }
 
+/*
+FUNCTION: saveChunk
+PURPOSE: Generate embedding and save chunk to database
+PARAMETERS: url (string), title (string), content (string)
+*/
 async function saveChunk(url, title, content) {
   try {
     const embedding = await getEmbedding(content);
+    
     await db.query(
       `INSERT INTO csuci_chunks (url, title, content, embedding)
        VALUES ($1, $2, $3, $4)`,
       [url, title, content, JSON.stringify(embedding)]
     );
+    
   } catch (err) {
     console.log(`Failed to save chunk from ${url}: ${err.message}`);
   }
 }
 
+/*
+================================================================================
+PDF EXTRACTION
+================================================================================
+*/
+
+/*
+FUNCTION: extractPdf
+PURPOSE: Download PDF and extract text
+PARAMETERS: url (string)
+RETURNS: Extracted text or null if failed
+*/
 async function extractPdf(url) {
   try {
     const res = await fetch(url, {
@@ -77,7 +175,7 @@ async function extractPdf(url) {
     });
     const buffer = await res.arrayBuffer();
 
-    // Silence pdf-parse noise
+    // Silence pdf-parse library console noise
     const origLog = console.log;
     const origInfo = console.info;
     const origWarn = console.warn;
@@ -89,13 +187,15 @@ async function extractPdf(url) {
     try {
       data = await pdfParse(Buffer.from(buffer));
     } finally {
-      // Always restore console even if parsing fails
+      // Always restore console
       console.log = origLog;
       console.info = origInfo;
       console.warn = origWarn;
     }
 
     const text = data.text.replace(/\s+/g, ' ').trim();
+    
+    // Reject PDFs with minimal text (likely image-only)
     if (text.length < 50) return null;
 
     console.log(`  PDF read: ${text.length} chars from ${url.split('/').pop()}`);
@@ -107,118 +207,42 @@ async function extractPdf(url) {
   }
 }
 
-const SEED_URLS = [
-  'https://www.csuci.edu/sitemap.xml'
+/*
+================================================================================
+CONFIGURATION
+================================================================================
+*/
 
-  // // Main
-  // 'https://www.csuci.edu/',
-  // 'https://www.csuci.edu/about/',
-  // 'https://www.csuci.edu/contact.htm',
-  // 'https://www.csuci.edu/students/',
-  // 'https://www.csuci.edu/student-life/',
-  // 'https://www.csuci.edu/studentaffairs/',
-  // 'https://www.csuci.edu/emergencyinfo/',
-  // 'https://www.csuci.edu/titleix/',
-  // 'https://www.csuci.edu/alumni/',
-  // 'https://www.csuci.edu/parenting-students/index.htm',
-  // 'https://www.csuci.edu/faculty/',
-  // 'https://www.csuci.edu/staff/',
+const MAX_PAGES = 500;      // Max pages to crawl before stopping
+const CHUNK_SIZE = 800;     // Characters per text chunk
 
-  // // Admissions
-  // 'https://www.csuci.edu/admissions/',
-  // 'https://www.csuci.edu/admissions/freshman/',
-  // 'https://www.csuci.edu/admissions/transfer/',
-  // 'https://www.csuci.edu/admissions/graduate/',
-  // 'https://www.csuci.edu/admissions/international/',
-  // 'https://www.csuci.edu/admissions/apply-now.htm',
-  // 'https://www.csuci.edu/admissions/tuition-and-aid/',
-  // 'https://www.csuci.edu/visit-campus/',
-  // 'https://www.csuci.edu/visit-campus/tours/index.htm',
-  // 'https://www.csuci.edu/orientation/',
-  // 'https://www.csuci.edu/orientation/nso-checklist.htm',
+/*
+================================================================================
+MAIN CRAWLER
+================================================================================
+*/
 
-  // // Academics
-  // 'https://www.csuci.edu/academics/',
-  // 'https://www.csuci.edu/academics/programs/',
-
-  // // Academic Advising
-  // 'https://www.csuci.edu/advising/',
-  // 'https://www.csuci.edu/advising/advisor/index.htm',
-  // 'https://www.csuci.edu/advising/advisor/drop-in-advising.htm',
-  // 'https://www.csuci.edu/advising/resources/index.htm',
-  // 'https://www.csuci.edu/advising/resources/freshman.htm',
-  // 'https://www.csuci.edu/advising/resources/transfer.htm',
-  // 'https://www.csuci.edu/advising/resources/academic-roadmaps/index.htm',
-  // 'https://www.csuci.edu/advising/services/index.htm',
-  // 'https://www.csuci.edu/advising/services/workshops.htm',
-  // 'https://www.csuci.edu/advising/gsc/index.htm',
-  // 'https://www.csuci.edu/advising/faq.htm',
-  // 'https://www.csuci.edu/advising/contact.htm',
-
-  // // Financial Aid
-  // 'https://www.csuci.edu/financialaid/',
-  // 'https://www.csuci.edu/financialaid/types/',
-  // 'https://www.csuci.edu/financialaid/apply.htm',
-  // 'https://www.csuci.edu/financialaid/deadlines.htm',
-  // 'https://www.csuci.edu/financialaid/dream-act.htm',
-  // 'https://www.csuci.edu/financialaid/satisfactory-academic-progress.htm',
-  // 'https://www.csuci.edu/financialaid/verification.htm',
-  // 'https://www.csuci.edu/financialaid/appeal.htm',
-  // 'https://www.csuci.edu/financialaid/contact.htm',
-  // 'https://www.csuci.edu/financialaid/faqs.htm',
-
-  // // Registrar
-  // 'https://www.csuci.edu/registrar/',
-  // 'https://www.csuci.edu/registrar/registration/',
-  // 'https://www.csuci.edu/registrar/graduation/',
-  // 'https://www.csuci.edu/registrar/transcripts.htm',
-  // 'https://www.csuci.edu/registrar/enrollment-verification.htm',
-  // 'https://www.csuci.edu/registrar/deadlines.htm',
-
-  // // Housing
-  // 'https://www.csuci.edu/housing/',
-  // 'https://www.csuci.edu/housing/apply.htm',
-  // 'https://www.csuci.edu/housing/rates.htm',
-  // 'https://www.csuci.edu/housing/meal-plans.htm',
-  // 'https://www.csuci.edu/housing/accommodations-rates/parking-info.htm',
-
-  // // Student Services
-  // 'https://www.csuci.edu/student-life/student-services/',
-  // 'https://www.csuci.edu/caps/',
-  // 'https://www.csuci.edu/dass/',
-  // 'https://www.csuci.edu/eop/',
-  // 'https://www.csuci.edu/careerdevelopment/',
-  // 'https://www.csuci.edu/veterans/',
-  // 'https://www.csuci.edu/basicneeds/index.htm',
-  // 'https://www.csuci.edu/wpe/index.htm',
-  // 'https://www.csuci.edu/cultural-centers/index.htm',
-  // 'https://www.csuci.edu/international/',
-  // 'https://www.csuci.edu/writing-ci/guide/',
-  // 'https://www.csuci.edu/student-life/dining.htm',
-  // 'https://www.csuci.edu/student-life/student-activities/',
-
-  // // Parking
-  // 'https://www.csuci.edu/publicsafety/parking/',
-  // 'https://www.csuci.edu/publicsafety/parking/Parking_Forms.htm',
-  // 'https://www.csuci.edu/publicsafety/parking/faq.htm',
-
-  // // Library
-  // 'https://library.csuci.edu',
-
-  // // Commencement & Events
-  // 'https://www.csuci.edu/commencement/ceremony-info/index.htm',
-  // 'https://www.csuci.edu/news/',
-  // 'https://www.csuci.edu/giving/',
-  // 'https://www.csuci.edu/careers/',
-];
-
-const MAX_PAGES = 500;
-const CHUNK_SIZE = 800;
-
+/*
+FUNCTION: crawl
+PURPOSE: Main crawler that processes sitemap URLs and discovers more via links
+PROCESS:
+  1. Fetch sitemap URLs
+  2. Process each URL (HTML or PDF)
+  3. Extract and chunk text
+  4. Generate embeddings
+  5. Save to database
+  6. Discover new links on each page
+*/
 async function crawl() {
+  // Track visited and queued URLs
   const visited = new Set();
+  const queued = new Set();  // FIXED: Use Set instead of array.includes() for O(1) lookups
+  
+  // Get initial URLs from sitemap
   const sitemapUrls = await getSitemapUrls();
-  const queue = [...SEED_URLS];
+  const queue = [...sitemapUrls];
+  sitemapUrls.forEach(url => queued.add(url));  // Mark all as queued
+  
   let pageCount = 0;
   let chunkCount = 0;
 
@@ -227,34 +251,52 @@ async function crawl() {
 
   console.log(`Starting crawl of up to ${MAX_PAGES} pages...\n`);
 
+  // Main crawl loop
   while (queue.length > 0 && pageCount < MAX_PAGES) {
     const url = queue.shift();
+    
     if (visited.has(url)) continue;
+    
     visited.add(url);
     pageCount++;
 
     try {
-      // Handle PDFs
+      /*
+      ================================================================
+      PDF HANDLING
+      ================================================================
+      */
       if (url.toLowerCase().endsWith('.pdf')) {
-        // Skip old PDFs from 2015 and before
+        // Skip old PDFs (2015 and earlier)
         if (url.match(/200[0-9]|201[0-5]/)) {
           console.log(`[${pageCount}] Skipped (old PDF): ${url.split('/').pop()}`);
           continue;
         }
         
         const text = await extractPdf(url);
+        
         if (text) {
           const chunks = chunkText(text);
+          
           for (const chunk of chunks) {
             await saveChunk(url, 'PDF Document', chunk);
             chunkCount++;
           }
-          console.log(`[${pageCount}] PDF — ${chunks.length} chunks saved: ${url}`);
+          
+          console.log(`[${pageCount}] PDF — ${chunks.length} chunks saved`);
+          console.log(`  URL: ${url}`);  // FIXED: Show actual URL being crawled
         }
+        
         continue;
       }
 
-      // Fetch HTML page
+      /*
+      ================================================================
+      HTML PAGE HANDLING
+      ================================================================
+      */
+      
+      // Download page with 10 second timeout
       const res = await fetch(url, {
         headers: { 'User-Agent': 'EkhoBot/1.0 (CSUCI Capstone)' },
         signal: AbortSignal.timeout(10000),
@@ -269,32 +311,44 @@ async function crawl() {
       const $ = cheerio.load(html);
       const title = $('title').text().trim() || url;
 
+      // Remove navigation and non-content elements
       $('nav, footer, script, style, header, .menu, .navigation, .breadcrumb, .sidebar, .cookie-notice, .alert, .banner').remove();
 
+      // Extract main content
       const text = $('main, .content, .page-content, article, #main-content, body')
         .first()
         .text()
         .replace(/\s+/g, ' ')
         .trim();
 
+      // Skip pages with minimal content
       if (text.length < 100) {
         console.log(`[${pageCount}] Too short, skipped: ${url}`);
         continue;
       }
 
+      // Split and save chunks
       const chunks = chunkText(text);
+      
       for (const chunk of chunks) {
         await saveChunk(url, title, chunk);
         chunkCount++;
       }
 
-      console.log(`[${pageCount}] ${chunks.length} chunks — ${title.slice(0, 60)}`);
+      console.log(`[${pageCount}] ${chunks.length} chunks — ${title.slice(0, 50)}`);
+      console.log(`  URL: ${url}`);  // FIXED: Show actual URL being crawled
 
-      // Find and queue internal links — single clean block
+      /*
+      ================================================================
+      LINK DISCOVERY
+      ================================================================
+      Find internal links and add to queue (goes beyond sitemap URLs)
+      */
       $('a[href]').each((_, el) => {
         const href = $(el).attr('href') || '';
         let fullUrl = '';
 
+        // Convert to absolute URL
         if (href.startsWith('http') && href.includes('csuci.edu')) {
           fullUrl = href.split('#')[0].split('?')[0];
         } else if (href.startsWith('/') && !href.startsWith('//')) {
@@ -303,20 +357,26 @@ async function crawl() {
 
         if (!fullUrl) return;
 
-        const notVisited = !visited.has(fullUrl) && !queue.includes(fullUrl);
+        // FIXED: Use Set for O(1) lookup instead of array.includes()
+        const notVisited = !visited.has(fullUrl) && !queued.has(fullUrl);
         const notJunk = !fullUrl.match(/\.(jpg|jpeg|png|gif|svg|zip|mp4|mp3|css|js|ico|webp)$/i);
         const notAuth = !fullUrl.match(/login|logout|signin|signout|sso|cas/i);
 
         if (notVisited && notJunk && notAuth) {
+          // Prioritize important pages
           const isImportant = fullUrl.match(/admissions|financialaid|housing|advising|counsel|parking|registrar|academics|student|financial|tuition|scholarship|grant|loan/i);
+          
           if (isImportant) {
-            queue.unshift(fullUrl); // important pages go to front
+            queue.unshift(fullUrl);  // Front of queue
           } else {
-            queue.push(fullUrl); // everything else goes to back
+            queue.push(fullUrl);     // End of queue
           }
+          
+          queued.add(fullUrl);  // FIXED: Track in Set
         }
       });
 
+      // Wait 300ms between requests (polite to server)
       await new Promise(r => setTimeout(r, 300));
 
     } catch (err) {
@@ -324,6 +384,11 @@ async function crawl() {
     }
   }
 
+  /*
+  ====================================================================
+  CRAWL COMPLETE
+  ====================================================================
+  */
   console.log(`\nCrawl complete.`);
   console.log(`Pages processed: ${pageCount}`);
   console.log(`Total chunks saved: ${chunkCount}`);
@@ -332,4 +397,9 @@ async function crawl() {
   await db.end();
 }
 
+/*
+================================================================================
+START CRAWLER
+================================================================================
+*/
 crawl();
