@@ -382,12 +382,14 @@ document.head.appendChild(style);
 ================================================================================
 SVG ICONS
 ================================================================================
-Dolphin icons in different colors for different contexts
+Official CSUCI Dolphins logo - local file
 */
 
-const dolphinWhite = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const dolphinRed = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="#C8102E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const dolphinBubble = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M20 8C20 8 18 4 12 4C7 4 4 7.5 4 12C4 14 4.5 15.5 5.5 16.5C4.5 17.5 3 18 3 18C3 18 5.5 18.5 7.5 17.5C8.8 18.4 10.3 19 12 19C17 19 20.5 15.5 20 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6C17 6 19 5 21 6C21 6 20 8 18 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const DOLPHIN_LOGO = 'images/ci-dolphin-logo.avif';
+
+const dolphinWhite = `<img src="${DOLPHIN_LOGO}" style="width:18px;height:18px;object-fit:contain;" alt="Dolphin">`;
+const dolphinRed = `<img src="${DOLPHIN_LOGO}" style="width:20px;height:20px;object-fit:contain;" alt="Dolphin">`;
+const dolphinBubble = `<img src="${DOLPHIN_LOGO}" style="width:32px;height:32px;object-fit:contain;" alt="Dolphin">`;
 
 /*
 ================================================================================

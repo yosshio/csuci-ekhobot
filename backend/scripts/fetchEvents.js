@@ -191,8 +191,8 @@ export async function fetchLatestEvents() {
       // Limit text to 3000 characters to keep chunk sizes reasonable
       text = text.slice(0, 3000);
 
-      console.log(`Fetched ${text.length} chars from: ${url}`);
-      console.log(`Preview: ${text.slice(0, 120).replace(/\n/g, ' ')}`);
+      //console.log(`Fetched ${text.length} chars from: ${url}`);
+      //console.log(`Preview: ${text.slice(0, 120).replace(/\n/g, ' ')}`);
 
       /*
       Enrich the text with event-specific prefix
