@@ -814,18 +814,19 @@ document.getElementById('ekho-input').addEventListener('keydown', e => {
 
 /*
 ================================================================================
-CHIP RENDERING - 5 COLUMN LAYOUT
+CHIP RENDERING - SINGLE ROW LAYOUT
 ================================================================================
 */
 
 /*
 FUNCTION: renderChips
-PURPOSE: Display 10 curated chips + Home button in 5-column grid
-PARAMETERS: topicKey (string) - Which chip set to display
+PURPOSE: Show chips in single row with pagination
+PARAMETERS: topicKey (string) - which chip set to display
 
 Layout:
-  - Root: 10 chips (2 rows of 5)
-  - Sub-topics: 10 chips + Home button (fills 11 spots in 5-column grid)
+  - 1 row = 5 buttons total
+  - Page 1: first 4 chips + More/Home/nothing
+  - Page 2: next 4 chips + Back button
 */
 function renderChips(topicKey) {
   // switching topics? reset back to page 1
@@ -842,26 +843,26 @@ function renderChips(topicKey) {
   const totalChips = chips.length;
   
   if (showingMore) {
-    // page 2: show remaining chips plus back button
-    chips.slice(9, 18).forEach(c => addChipBtn(bar, c));
+    // page 2: show next 4 chips (5-8) plus back button
+    chips.slice(4, 8).forEach(c => addChipBtn(bar, c));
     
     const back = document.createElement('button');
     back.className = 'ekho-chip home';
-    back.textContent = t('Back');
+    back.textContent = '← Back';
     back.onclick = () => {
       showingMore = false;
       renderChips(topicKey);
     };
     bar.appendChild(back);
   } else {
-    // page 1: show first 9 chips, then add More/Home/nothing as 10th button
-    chips.slice(0, 9).forEach(c => addChipBtn(bar, c));
+    // page 1: show first 4 chips, then add More/Home/nothing as 5th button
+    chips.slice(0, 4).forEach(c => addChipBtn(bar, c));
     
-    if (totalChips > 9) {
+    if (totalChips > 4) {
       // more chips exist, show More button
       const more = document.createElement('button');
       more.className = 'ekho-chip';
-      more.textContent = t('More...');
+      more.textContent = 'More...';
       more.onclick = () => {
         showingMore = true;
         renderChips(topicKey);
@@ -871,11 +872,11 @@ function renderChips(topicKey) {
       // sub-topic with few chips, show Home button
       const home = document.createElement('button');
       home.className = 'ekho-chip home';
-      home.textContent = t('Home');
+      home.textContent = '🏠 Home';
       home.onclick = () => renderChips('root');
       bar.appendChild(home);
     }
-    // root with ≤9 chips: no extra button needed
+    // root with ≤4 chips: no extra button needed
   }
 }
 
