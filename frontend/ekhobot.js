@@ -314,7 +314,7 @@ style.textContent = `
   .ekho-row.user { flex-direction: row-reverse; padding: 0; }
 
   .ekho-avatar {
-    width: 26px; height: 26px; border-radius: 50%;
+    width: 36px; height: 36px; border-radius: 50%;
     background: #C8102E; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
   }
