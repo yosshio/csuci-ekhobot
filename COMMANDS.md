@@ -30,7 +30,7 @@ Events refresh complete. 27/27 pages saved.
 **Option 1 - npx serve (recommended, avoids file:// CORS issues):**
 ```bash
 cd frontend
-npx serve .
+npx serve . -l 3001
 ```
 Then open the URL it gives you (usually http://localhost:3000 or http://localhost:5000).
 
@@ -224,7 +224,7 @@ node server.js
 
 # Terminal 2 - Frontend
 cd frontend
-npx serve .
+npx serve . -l 3001
 ```
 
 Open the URL from npx serve in your browser.
@@ -251,7 +251,7 @@ node server.js
 
 # 5. Open frontend (new terminal)
 cd frontend
-npx serve .
+npx serve . -l 3001
 ```
 
 ---
@@ -261,7 +261,7 @@ npx serve .
 | What | Command |
 |------|---------|
 | Start backend | `cd backend && node server.js` |
-| Open frontend | `cd frontend && npx serve .` |
+| Open frontend | `cd frontend && npx serve . -l 3001` |
 | Crawl website | `cd backend && node scripts/index.js` |
 | Refresh events | `cd backend && node scripts/fetchEvents.js` |
 | Set alert | `cd backend && node setAlert.js "message"` |
