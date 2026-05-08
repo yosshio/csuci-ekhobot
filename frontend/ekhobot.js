@@ -142,7 +142,7 @@ style.textContent = `
   /* Chat bubble button */
   #ekho-bubble {
     width: 60px; height: 60px; border-radius: 50%;
-    background: #C8102E; border: 3px solid #fff;
+    background: rgba(255,255,255,0.3); border: 3px solid #fff;
     box-shadow: 0 4px 18px rgba(200,16,46,0.40);
     cursor: pointer; display: flex;
     align-items: center; justify-content: center;
@@ -781,7 +781,7 @@ async function openChat() {
   if (!chatInitialized) {
     chatInitialized = true;
     addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?\n\nTambién puedo ayudarte en español. 日本語でもお手伝いできます。");
-    addHint("Choose a topic below or type your question.");
+    addHint("EkhoBot can make mistakes, verify important infomation.");
     renderChips('root');
   }
 }
