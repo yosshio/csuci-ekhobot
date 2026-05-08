@@ -101,7 +101,7 @@ app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
     // or requests from localhost
-    if (!origin || origin.startsWith('http://localhost')) {
+    if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin === 'null') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -459,6 +459,43 @@ app.post('/chat', async (req, res) => {
   } catch (err) {
     console.error('Chat error:', err.message);
     res.status(500).json({ error: 'EkhoBot hit a wave — try again!' });
+  }
+});
+
+/*
+================================================================================
+RATING SYSTEM
+================================================================================
+Saves user ratings with chat history for review
+*/
+
+/*
+ENDPOINT: POST /rate
+PURPOSE: Save ratings with chat to prove EkhoBot
+BODY: { userMessage, botResponse, rating, conversation }
+RETURNS: { success: true }
+*/
+app.post('/rate', async (req, res) => {
+  const { userMessage, botResponse, rating, conversation } = req.body;
+
+  // validate rating value
+  if (!['up', 'down'].includes(rating)) {
+    return res.status(400).json({ error: 'Invalid rating' });
+  }
+
+  try {
+    await db.query(
+      `INSERT INTO ekhobot_ratings (user_message, bot_response, rating, conversation)
+       VALUES ($1, $2, $3, $4)`,
+      [userMessage, botResponse, rating, JSON.stringify(conversation)]
+    );
+
+    console.log(`Rating saved: ${rating} — "${userMessage.slice(0, 60)}"`);
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error('Rating save failed:', err.message);
+    res.status(500).json({ error: 'Failed to save rating' });
   }
 });
 
