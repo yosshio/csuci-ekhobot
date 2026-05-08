@@ -424,6 +424,29 @@ style.textContent = `
     border-radius: 6px; transition: background 0.15s, color 0.15s;
   }
   #ekho-new-chat:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+  /* Rating buttons */
+  .ekho-rating {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+  .ekho-rate-btn {
+    background: none;
+    border: 1px solid #E8E9EA;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #A7A9AC;
+    transition: all 0.15s;
+    font-family: 'Source Sans 3', sans-serif;
+  }
+  .ekho-rate-btn:hover { background: #E8E9EA; color: #555; }
+  .ekho-rate-btn.selected-up { background: #4caf50; border-color: #4caf50; color: #fff; }
+  .ekho-rate-btn.selected-down { background: #C8102E; border-color: #C8102E; color: #fff; }
+  .ekho-rate-btn:disabled { cursor: default; }
 `;
 document.head.appendChild(style);
 
@@ -1043,6 +1066,61 @@ function addBotMessage(text) {
   row.appendChild(avatar);
   row.appendChild(msg);
   msgs.appendChild(row);
+
+  // Remove rating from previous message before adding new one
+  document.querySelectorAll('.ekho-rating').forEach(r => r.remove());
+
+  // only show rating after at least 3 user messages
+  const userMessageCount = history.filter(m => m.role === 'user').length;
+  if (text.length > 80 && userMessageCount >= 3) {
+    const rating = document.createElement('div');
+    rating.className = 'ekho-rating';
+
+    const rateLabel = document.createElement('span');
+    rateLabel.textContent = 'Rate this chat:';
+    rateLabel.style.cssText = 'font-size:11px;color:#A7A9AC;align-self:center;';
+
+    const thumbUp = document.createElement('button');
+    thumbUp.className = 'ekho-rate-btn';
+    thumbUp.innerHTML = '&#9650;';  // solid up triangle
+    thumbUp.title = 'Helpful';
+
+    const thumbDown = document.createElement('button');
+    thumbDown.className = 'ekho-rate-btn';
+    thumbDown.innerHTML = '&#9660;';  // solid down triangle
+    thumbDown.title = 'Not helpful';
+
+    // get the user message that prompted this response
+    const userMsg = history.length >= 2
+      ? history[history.length - 2]?.content || ''
+      : '';
+
+    function submitRating(ratingValue, clickedBtn) {
+      thumbUp.disabled = true;
+      thumbDown.disabled = true;
+      clickedBtn.classList.add(ratingValue === 'up' ? 'selected-up' : 'selected-down');
+
+      fetch('http://localhost:3000/rate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userMessage: userMsg,
+          botResponse: text,
+          rating: ratingValue,
+          conversation: history
+        })
+      }).catch(() => {});  // silent fail
+    }
+
+    thumbUp.onclick = () => submitRating('up', thumbUp);
+    thumbDown.onclick = () => submitRating('down', thumbDown);
+
+    rating.appendChild(rateLabel);
+    rating.appendChild(thumbUp);
+    rating.appendChild(thumbDown);
+    msgs.appendChild(rating);
+  }
+
   msgs.scrollTop = msgs.scrollHeight;
 }
 
