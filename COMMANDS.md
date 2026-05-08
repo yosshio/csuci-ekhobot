@@ -32,23 +32,12 @@ Events refresh complete. 27/27 pages saved.
 cd frontend
 npx serve . -l 3001
 ```
-Then open the URL it gives you (usually http://localhost:3000 or http://localhost:5000).
+Then open the URL
 
-**Option 2 - double click:**
-Navigate to the `frontend` folder and double-click `index.html`.
-
-**Option 3 - direct URL (current setup):**
 ```
 http://localhost:3001/CSU%20Channel%20Islands.html
 ```
 Open this in Chrome after running: npx serve . -l 3001
-
-**Option 3 - command line:**
-```bash
-cd frontend
-start index.html       # Windows
-open index.html        # macOS
-```
 
 ---
 
