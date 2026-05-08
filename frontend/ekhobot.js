@@ -655,10 +655,10 @@ win.innerHTML = `
       <p class="ekho-header-title">EkhoBot</p>
       <p class="ekho-header-sub">CSU Channel Islands</p>
     </div>
-    <button id="ekho-lang-btn">EN | ES | 日本語</button>
     <button id="ekho-new-chat" title="New conversation">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
     </button>
+    <button id="ekho-lang-btn">EN | ES | 日本語</button>
     <button id="ekho-close">&#x2715;</button>
   </div>
   <div id="ekho-lang-dropdown"></div>
