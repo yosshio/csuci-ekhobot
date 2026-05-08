@@ -37,6 +37,12 @@ Then open the URL it gives you (usually http://localhost:3000 or http://localhos
 **Option 2 - double click:**
 Navigate to the `frontend` folder and double-click `index.html`.
 
+**Option 3 - direct URL (current setup):**
+```
+http://localhost:3001/CSU%20Channel%20Islands.html
+```
+Open this in Chrome after running: npx serve . -l 3001
+
 **Option 3 - command line:**
 ```bash
 cd frontend
@@ -119,6 +125,29 @@ If you get a connection error, the backend is not running.
 
 ---
 
+## Database Tables
+
+**csuci_chunks**
+The main search database. Built by running the crawler (index.js) and stores all indexed content from the CSUCI website.
+
+- `id` — Auto-generated unique number for each row
+- `url` — The webpage the chunk came from (e.g. csuci.edu/financialaid/)
+- `title` — The page title at the time of crawling
+- `content` — 800-character slice of text from that page
+- `embedding` — 384-dimensional vector representing the meaning of the content, used for semantic search
+
+**ekhobot_ratings**
+Stores user feedback submitted via the thumbs up/down rating system.
+
+- `id` — Auto-generated unique number for each row
+- `created_at` — Timestamp of when the rating was submitted
+- `user_message` — The question the student asked
+- `bot_response` — The answer EkhoBot gave
+- `rating` — Either "up" (helpful) or "down" (not helpful)
+- `conversation` — Full chat history as JSON at the time of rating, useful for understanding the context around a bad response
+
+---
+
 ## Database Checks (Run in Supabase SQL Editor)
 
 **Count total chunks and pages:**
@@ -176,7 +205,7 @@ curl -X POST http://localhost:3000/alert \
 
 Edit `backend/scripts/index.js` line ~106:
 ```javascript
-const MAX_PAGES = 1500;  // change this number (crawling csuci xml only yielded 600 or so)
+const MAX_PAGES = 1500;  // change this number
 ```
 
 Then re-run the crawler:
