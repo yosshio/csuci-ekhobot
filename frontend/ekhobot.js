@@ -117,7 +117,7 @@ style.textContent = `
   #ekho-speech {
     background: #fff; color: #1a1a1a;
     font-family: 'Source Sans 3', sans-serif;
-    font-size: 13px; font-weight: 600;
+    font-size: 15px; font-weight: 600;
     padding: 8px 14px; border-radius: 18px 18px 18px 4px;
     border: 1.5px solid #E8E9EA;
     box-shadow: 0 4px 16px rgba(0,0,0,0.10);
@@ -142,7 +142,7 @@ style.textContent = `
   /* Chat bubble button */
   #ekho-bubble {
     width: 60px; height: 60px; border-radius: 50%;
-    background: rgba(255,255,255,0.3); border: 3px solid #fff;
+    background: #D1D3D4; border: 3px solid #fff;
     box-shadow: 0 4px 18px rgba(200,16,46,0.40);
     cursor: pointer; display: flex;
     align-items: center; justify-content: center;
@@ -622,8 +622,19 @@ launcher.id = 'ekho-launcher';
 
 const speech = document.createElement('div');
 speech.id = 'ekho-speech';
-speech.textContent = 'Need some help?';
-speech.onclick = () => openChat();
+
+const SPEECH_BUBBLES = [
+  "🐬 Blub blub! Lost, little dolphin? I'll lead the way!",
+  "🌊 Eee-eee! Fellow dolphin, need a fin?",
+  "🐬 *breaches excitedly* Hey dolphin, need some help?",
+  "🌊 Eee! Swim over — I'll guide you through the pod!",
+  "🐬 *clicks and whistles* This dolphin knows all of CI!",
+  "🌊 Blub! Every dolphin finds their way with me!",
+  "🐬 Eee-eee! Don't drift alone — I've got your current!",
+  "🌊 *splashes* Ahoy, dolphin! The pod sent me to help!",
+  "🐬 Squeak squeak! Navigating CI? Dive in, I'll guide you!",
+];
+speech.textContent = SPEECH_BUBBLES[Math.floor(Math.random() * SPEECH_BUBBLES.length)];speech.onclick = () => openChat();
 
 const bubble = document.createElement('div');
 bubble.id = 'ekho-bubble';
