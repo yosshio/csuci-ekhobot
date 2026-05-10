@@ -1,0 +1,338 @@
+EkhoBot - Sources & References
+================================
+
+CLAUDE AI
+---------------------
+- Claude AI - Used throughout development for code support, debugging, creative deveopment(the dolphin widget speaking like a dolphin), and for support in other languages
+   https://claude.ai
+
+- Anthropic API Documentation - Used Claude API for chat generation
+   https://docs.anthropic.com
+
+
+RAG & VECTOR SEARCH
+--------------------
+- "You Probably Don't Need a Vector Database" - Encore Blog
+   Explains pgvector vs dedicated vector DBs, RAG pipelines
+   https://encore.dev/blog/you-probably-dont-need-a-vector-database
+
+- pgvector Guide: Vector Search and RAG in PostgreSQL - Northflank
+   Deep dive into pgvector setup and usage
+   https://northflank.com/blog/postgresql-vector-search-guide-with-pgvector
+
+- PostgreSQL as a Vector Database: A Complete Guide - Yugabyte
+   How pgvector turns PostgreSQL into a vector DB
+   https://www.yugabyte.com/key-concepts/using-postgresql-as-a-vector-database
+
+- Building Intelligent Search with AI Embeddings and pgvector - Neon
+   Step by step semantic search implementation
+   https://neon.com/guides/ai-embeddings-postgres-search
+
+- How to Build AI-Powered Semantic Search in PostgreSQL with pgvector - Red Gate
+   Practical pgvector tutorial
+   https://www.red-gate.com/simple-talk/databases/postgresql/how-to-build-an-ai-powered-semantic-search-in-postgresql-with-pgvector
+
+- Vector Similarity Search with PostgreSQL's pgvector - Severalnines
+   Detailed technical overview
+   https://severalnines.com/blog/vector-similarity-search-with-postgresqls-pgvector-a-deep-dive
+
+
+RAG CHATBOT TUTORIALS
+----------------------
+- RAG Agent Guide - Vercel AI SDK
+   Official guide to building a RAG chatbot with Node.js
+   https://sdk.vercel.ai/docs/guides/rag-chatbot
+
+- Build a RAG Chatbot with Node.js and Ollama - Medium
+    Local RAG chatbot architecture explained clearly
+    https://medium.com/@nitink4107/building-a-local-rag-chatbot-with-node-js-and-ollama-step-by-step-6ecdea5c4c92
+
+- Build Your Own RAG Chatbot with JavaScript - freeCodeCamp
+    90 minute video tutorial on RAG with JavaScript
+    https://www.freecodecamp.org/news/build-your-own-rag-chatbot-with-javascript
+
+- Building Smarter Frontend Chatbots with RAG - LogRocket
+    Frontend chatbot architecture with RAG
+    https://blog.logrocket.com/frontend-chatbots-rag-langchain
+
+- RAG Application for Customer Support with Node.js - Medium
+    Practical RAG customer support chatbot
+    https://medium.com/@dillibabukadati/lets-build-a-practical-rag-application-for-customer-support-using-langchain-and-node-js-d030dc180945
+
+
+WEB SCRAPING & CHEERIO
+-----------------------
+- Web Scraping with Cheerio and Node.js - freeCodeCamp
+    Comprehensive guide to Cheerio scraping
+    https://www.freecodecamp.org/news/how-to-scrape-websites-with-node-js-and-cheerio
+
+- Web Scraping with Cheerio and Node.js - CircleCI
+    Cheerio + Axios scraping tutorial with CI pipeline
+    https://circleci.com/blog/web-scraping-with-cheerio
+
+- How to Scrape Web Pages with Cheerio - ZenRows
+    Step by step Cheerio scraping guide
+    https://www.zenrows.com/blog/web-scraping-cheerio
+
+- How to Use Node.js and Cheerio for Web Scraping - DigitalOcean
+    Classic Cheerio + Node.js tutorial
+    https://www.digitalocean.com/community/tutorials/how-to-use-node-js-request-and-cheerio-to-set-up-simple-web-scraping
+
+
+NODE.JS & EXPRESS
+-----------------
+- Express.js Official Documentation
+    Routing, middleware, request/response reference
+    https://expressjs.com/en/guide/routing.html
+
+- Node.js Official Documentation
+    Core Node.js concepts, async/await, modules
+    https://nodejs.org/en/docs
+
+- node-cron npm package
+    Cron scheduling for Node.js, pattern reference
+    https://www.npmjs.com/package/node-cron
+
+
+EMBEDDINGS & TRANSFORMERS
+--------------------------
+- Xenova/transformers.js GitHub
+    Official repo for the Transformers.js library used for local embeddings
+    https://github.com/xenova/transformers.js
+
+- all-MiniLM-L6-v2 on HuggingFace
+    The actual embedding model used in the project
+    https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+
+
+DATABASE & SUPABASE
+--------------------
+- Supabase Documentation
+    PostgreSQL hosting, SQL editor, connection strings
+    https://supabase.com/docs
+
+- pgvector GitHub Repository
+    Official pgvector source, installation, and operator reference
+    https://github.com/pgvector/pgvector
+
+
+STACK OVERFLOW
+--------------
+- pgvector cosine similarity questions
+    https://stackoverflow.com/questions/tagged/pgvector
+
+- Node.js CORS issues
+    https://stackoverflow.com/questions/tagged/cors+node.js
+
+- Cheerio web scraping questions
+    https://stackoverflow.com/questions/tagged/cheerio
+
+
+REDDIT
+------
+- r/node - Node.js community
+    General Node.js help, Express questions, best practices
+    https://www.reddit.com/r/node
+
+- r/MachineLearning - RAG and embeddings discussions
+    https://www.reddit.com/r/MachineLearning
+
+- r/learnprogramming - General programming help
+    https://www.reddit.com/r/learnprogramming
+
+
+YOUTUBE
+-------
+- freeCodeCamp - RAG Chatbot with JavaScript (Ania Kubow)
+    https://www.youtube.com/watch?v=d-VKYF4Zow0
+
+- Traversy Media - Node.js and Express crash course
+    https://www.youtube.com/watch?v=CnH3kAXSrmU
+    https://www.youtube.com/watch?v=32M1al-Y6Ag
+
+- Web Dev Simplified - Async JS Crash Course - Callbacks, Promises, Async Await
+    https://www.youtube.com/watch?v=PoRJizFvM7s
+
+CSS & HTML SUPPORT
+------------------
+- MDN Web Docs - CSS Grid Layout
+    Used for the 5 column chip bar layout 
+    https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout
+
+- CSS-Tricks - A Complete Guide to CSS Grid
+    Comprehensive grid reference including gap, repeat(), and fr units
+    https://css-tricks.com/complete-guide-css-grid-layout
+
+- W3Schools - CSS Grid Layout
+    Quick reference for grid properties and examples
+    https://www.w3schools.com/css/css_grid.asp
+
+- MDN Web Docs - CSS Flexbox
+    Used for header layout, message rows, input area alignment
+    https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_flexible_box_layout
+
+- MDN Web Docs - position: fixed
+    Used to pin chat bubble and chat window to bottom-right corner of viewport
+    https://developer.mozilla.org/en-US/docs/Web/CSS/position
+
+- MDN Web Docs - @keyframes
+    Used for ekho-pop, ekho-pulse, and ekho-blink animations in widget
+    https://developer.mozilla.org/en-US/docs/Web/CSS/@keyframes
+
+- MDN Web Docs - Using CSS Animations
+    Reference for animation timing, direction, and iteration used in typing indicator
+    https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Animations/Using
+
+- MDN Web Docs - CSS animation property
+    Used for alert banner pulse and speech bubble pop animation
+    https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/animation
+
+- MDN Web Docs - CSS transition property
+    Used for chip hover effects, button color transitions, input border focus
+    https://developer.mozilla.org/en-US/docs/Web/CSS/transition
+
+- MDN Web Docs - CSS overflow and scrollbar styling
+    Used for messages area scroll behavior and scrollbar width: thin
+    https://developer.mozilla.org/en-US/docs/Web/CSS/overflow
+
+- MDN Web Docs - CSS border-radius
+    Used for rounded chat bubbles, chips, buttons, and circular avatar
+    https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius
+
+- MDN Web Docs - CSS box-shadow
+    Used for chat window drop shadow and bubble glow effect
+    https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow
+
+- MDN Web Docs - CSS min() function
+    Used for responsive window sizing: width: min(420px, 100vw)
+    https://developer.mozilla.org/en-US/docs/Web/CSS/min
+
+- MDN Web Docs - CSS media queries
+    Used for responsive layout breakpoints at 600px and 900px
+    https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries
+
+- MDN Web Docs - CSS z-index
+    Used to layer chat window (9998) and launcher bubble (9999) above page content
+    https://developer.mozilla.org/en-US/docs/Web/CSS/z-index
+
+- MDN Web Docs - DOM createElement and appendChild
+    Used throughout ekhobot.js to build entire chat UI dynamically
+    https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement
+
+- MDN Web Docs - Fetch API
+    Used to send POST requests to backend /chat, /alert, and /rate endpoints
+    https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+
+- Google Fonts - Libre Baskerville and Source Sans 3
+    Fonts imported in ekhobot.js for chat widget
+    https://fonts.google.com
+
+- MDN Web Docs - CSS text-overflow ellipsis
+    Used on chip buttons to truncate long labels that overflow button width
+    https://developer.mozilla.org/en-US/docs/Web/CSS/text-overflow
+
+- W3Schools - CSS Colors and RGBA
+    Reference for RGBA color values used in header overlays and shadows
+    https://www.w3schools.com/css/css_colors_rgb.asp
+
+
+SQL LEARNING
+------------
+- W3Schools - SQL Tutorial (Full Reference)
+    Complete reference for SELECT, INSERT, DELETE, CREATE TABLE, WHERE, GROUP BY
+    Used to learn SQL syntax for all queries in the project
+    https://www.w3schools.com/sql/
+
+- W3Schools - SQL CREATE TABLE
+    Reference for creating tables with data types, PRIMARY KEY, NOT NULL
+    https://www.w3schools.com/sql/sql_create_table.asp
+
+- W3Schools - SQL INSERT INTO
+    Reference for inserting rows used in crawler and event fetcher
+    https://www.w3schools.com/sql/sql_insert.asp
+
+- W3Schools - SQL SELECT, WHERE, ORDER BY, GROUP BY
+    Reference for all SELECT queries used to search and review database
+    https://www.w3schools.com/sql/sql_syntax.asp
+
+- GeeksforGeeks - SQL Tutorial
+    Alternative SQL reference covering all commands with examples
+    https://www.geeksforgeeks.org/sql/sql-tutorial/
+
+
+SUPABASE SETUP
+---------------
+- Supabase Official Documentation - Getting Started
+    How to create a project, find connection strings, use SQL editor
+    https://supabase.com/docs
+
+- Supabase - pgvector Extension Guide
+    Official Supabase guide for enabling pgvector, creating vector columns, running similarity search
+    Directly matches setup used in this project
+    https://supabase.com/docs/guides/database/extensions/pgvector
+
+- Supabase - Vector Columns Guide
+    How to store embeddings in Supabase PostgreSQL with vector data type
+    https://supabase.com/docs/guides/ai/vector-columns
+
+- Supabase - Database Extensions Overview
+    How to enable extensions like pgvector through the SQL editor or dashboard
+    https://supabase.com/docs/guides/database/extensions
+
+- How to Enable pgvector in Supabase - Nesin.io
+    Step-by-step guide specifically for enabling pgvector in Supabase dashboard
+    https://nesin.io/blog/enable-pgvector-supabase
+
+- Semantic Search Using Supabase Vector - OpenAI Cookbook
+    Full walkthrough of setting up pgvector on Supabase and running similarity search
+    https://cookbook.openai.com/examples/vector_databases/supabase/semantic-search
+
+- Using Supabase Vector Database with PostgreSQL - LogRocket
+    How to use pgvector with Supabase and an Express backend
+    https://blog.logrocket.com/using-supabases-vector-database-postgresql/
+
+- Build a RAG App with Supabase and pgvector - Descope
+    Full RAG setup tutorial using Supabase SQL editor and pgvector
+    https://www.descope.com/blog/post/rag-descope-supabase-pgvector-1
+
+
+NPX SERVE & NODE
+-----------------
+- serve - npm Official Package Page
+    Official docs for npx serve, including -l (port) flag used to run on port 3001
+    https://www.npmjs.com/package/serve
+
+- How to Preview Static Websites Using npx serve - arzerin.com
+    Explains exactly how npx serve works as a local static file server
+    https://arzerin.com/2025/06/12/how-to-instantly-preview-static-websites-locally-using-npx-serve/
+
+- NPM Serve - GeeksforGeeks
+    Explains serve usage including custom port (-l flag) and zero-config setup
+    https://www.geeksforgeeks.org/node-js/npm-serve/
+
+- Node.js Official Download and Install Guide
+    How to install Node.js which is required to run node server.js and all scripts
+    https://nodejs.org/en/download
+
+- dotenv GitHub Repository
+    How dotenv loads .env files into process.env used in all three backend files
+    https://github.com/motdotla/dotenv
+
+- node-postgres (pg) npm Package
+    pg library used to connect Node.js to PostgreSQL and run all SQL queries
+    https://www.npmjs.com/package/pg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
