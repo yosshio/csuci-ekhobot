@@ -65,9 +65,6 @@ const EVENT_URLS = [
   'https://www.csuci.edu/news/releases/social-justice-conf-2026210.htm',
   'https://www.csuci.edu/news/releases/esbi-spring2026.htm',
   'https://www.csuci.edu/news/releases/blackhistorymonth-202602.htm',
-
-  // Check service status so students can ask EkhoBot about alerts in the banner
-  'https://ciapps.csuci.edu/status'
 ];
 
 /*
@@ -97,58 +94,6 @@ export async function fetchLatestEvents() {
   await db.query(`DELETE FROM csuci_chunks WHERE title LIKE 'EVENT:%'`);
 
   let saved = 0;
-
-/*
-FUNCTION: fetchServiceStatus
-PURPOSE: Scrape the CSUCI service status page and save all service statuses
-
-Runs every 30 minutes so students get almost real time status info
-*/
-export async function fetchServiceStatus() {
-  try {
-    const res = await fetch('https://ciapps.csuci.edu/status', {
-      headers: { 'User-Agent': 'EkhoBot/1.0 (CSUCI Capstone)' },
-      signal: AbortSignal.timeout(10000),
-    });
-
-    const html = await res.text();
-    const $ = cheerio.load(html);
-
-    // Extract all rows from the status table
-    const services = [];
-    $('table tr').each((_, row) => {
-      const cells = $(row).find('td');
-      if (cells.length >= 2) {
-        const name = $(cells[0]).text().trim();
-        const status = $(cells[1]).text().trim();
-        const link = $(cells[1]).find('a').attr('href') || 'https://ciapps.csuci.edu/status';
-        if (name && status) {
-          services.push(`${name}: ${status} — ${link}`);
-        }
-      }
-    });
-
-    if (services.length === 0) return;
-
-    // Build a readable status summary
-    const content = `CSUCI Service Status (updated ${new Date().toLocaleString()}):\n\n` + services.join('\n') +
-      '\n\nFor full status details visit: https://ciapps.csuci.edu/status';
-
-    // Delete old status chunk and replace with new ones
-    await db.query(`DELETE FROM csuci_chunks WHERE title = 'CSUCI Service Status'`);
-
-    const embedding = await getEmbedding(content);
-    await db.query(
-      `INSERT INTO csuci_chunks (url, title, content, embedding) VALUES ($1, $2, $3, $4)`,
-      ['https://ciapps.csuci.edu/status', 'CSUCI Service Status', content, JSON.stringify(embedding)]
-    );
-
-    console.log(`Service status updated: ${services.length} services indexed`);
-
-  } catch (err) {
-    console.log('Service status fetch failed:', err.message);
-  }
-}
 
   /*
   ======================================================================
@@ -271,6 +216,60 @@ export async function fetchServiceStatus() {
   }
 
   console.log(`\nEvents refresh complete. ${saved}/${EVENT_URLS.length} pages saved.`);
+}
+
+/*
+================================================================================
+SERVICE STATUS FETCHER
+================================================================================
+*/
+
+/*
+FUNCTION: fetchServiceStatus
+PURPOSE: Scrape the CSUCI service status page and save all service statuses
+Runs every 30 minutes so students get close to real time status info
+*/
+export async function fetchServiceStatus() {
+  try {
+    const res = await fetch('https://ciapps.csuci.edu/status', {
+      headers: { 'User-Agent': 'EkhoBot/1.0 (CSUCI Capstone)' },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    const html = await res.text();
+    const $ = cheerio.load(html);
+
+    const services = [];
+    $('table tr').each((_, row) => {
+      const cells = $(row).find('td');
+      if (cells.length >= 2) {
+        const name = $(cells[0]).text().trim();
+        const status = $(cells[1]).text().trim();
+        const link = $(cells[1]).find('a').attr('href') || 'https://ciapps.csuci.edu/status';
+        if (name && status) {
+          services.push(`${name}: ${status} — ${link}`);
+        }
+      }
+    });
+
+    if (services.length === 0) return;
+
+    const content = `CSUCI Service Status (updated ${new Date().toLocaleString()}):\n\n` + services.join('\n') +
+      '\n\nFor full status details visit: https://ciapps.csuci.edu/status';
+
+    await db.query(`DELETE FROM csuci_chunks WHERE title = 'CSUCI Service Status'`);
+
+    const embedding = await getEmbedding(content);
+    await db.query(
+      `INSERT INTO csuci_chunks (url, title, content, embedding) VALUES ($1, $2, $3, $4)`,
+      ['https://ciapps.csuci.edu/status', 'CSUCI Service Status', content, JSON.stringify(embedding)]
+    );
+
+    console.log(`Service status updated: ${services.length} services indexed`);
+
+  } catch (err) {
+    console.log('Service status fetch failed:', err.message);
+  }
 }
 
 /*
