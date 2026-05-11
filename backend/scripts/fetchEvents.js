@@ -65,6 +65,9 @@ const EVENT_URLS = [
   'https://www.csuci.edu/news/releases/social-justice-conf-2026210.htm',
   'https://www.csuci.edu/news/releases/esbi-spring2026.htm',
   'https://www.csuci.edu/news/releases/blackhistorymonth-202602.htm',
+
+  // Check service status so students can ask EkhoBot about alerts in the banner
+  'https://ciapps.csuci.edu/status'
 ];
 
 /*
