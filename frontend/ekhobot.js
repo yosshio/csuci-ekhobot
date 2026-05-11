@@ -648,10 +648,10 @@ const SPEECH_BUBBLES = [
   "🐬 Blub blub! Lost, little dolphin? I'll lead the way!",
   "🌊 Eee-eee! Fellow dolphin, need a fin?",
   "🐬 *breaches excitedly* Hey dolphin, need some help?",
-  "🌊 Eee! Swim over — I'll guide you through the pod!",
+  "🌊 Eee! Swim over - I'll guide you through the pod!",
   "🐬 *clicks and whistles* This dolphin knows all of CI!",
   "🌊 Blub! Every dolphin finds their way with me!",
-  "🐬 Eee-eee! Don't drift alone — I've got your current!",
+  "🐬 Eee-eee! Don't drift alone - I've got your current!",
   "🌊 *splashes* Ahoy, dolphin! The pod sent me to help!",
   "🐬 Squeak squeak! Navigating CI? Dive in, I'll guide you!",
 ];
@@ -1140,7 +1140,7 @@ function addComingSoon(name) {
   
   const msg = document.createElement('div');
   msg.className = 'ekho-msg coming-soon';
-  msg.textContent = `${name} is coming soon — this feature is in development.`;
+  msg.textContent = `${name} is coming soon - this feature is in development.`;
   
   row.appendChild(avatar);
   row.appendChild(msg);

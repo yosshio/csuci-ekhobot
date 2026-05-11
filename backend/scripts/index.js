@@ -283,7 +283,7 @@ async function crawl() {
             chunkCount++;
           }
           
-          console.log(`[${pageCount}] PDF — ${chunks.length} chunks saved`);
+          console.log(`[${pageCount}] PDF - ${chunks.length} chunks saved`);
           console.log(`  URL: ${url}`);  // Show URL being crawled
         }
         
@@ -335,7 +335,7 @@ async function crawl() {
         chunkCount++;
       }
 
-      console.log(`[${pageCount}] ${chunks.length} chunks — ${title.slice(0, 50)}`);
+      console.log(`[${pageCount}] ${chunks.length} chunks - ${title.slice(0, 50)}`);
       console.log(`  URL: ${url}`);  // Show URL being crawled
 
       /*

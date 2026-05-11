@@ -50,7 +50,7 @@ node scripts/index.js
 
 Takes 30-60 minutes depending on MAX_PAGES setting.
 Deletes all existing chunks and starts fresh.
-Progress shows as: `[423] 4 chunks — Financial Aid Office - CSUCI`
+Progress shows as: `[423] 4 chunks - Financial Aid Office - CSUCI`
 
 ---
 
@@ -119,21 +119,21 @@ If you get a connection error, the backend is not running.
 **csuci_chunks**
 The main search database. Built by running the crawler (index.js) and stores all indexed content from the CSUCI website.
 
-- `id` — Auto-generated unique number for each row
-- `url` — The webpage the chunk came from (e.g. csuci.edu/financialaid/)
-- `title` — The page title at the time of crawling
-- `content` — 800-character slice of text from that page
-- `embedding` — 384-dimensional vector representing the meaning of the content, used for semantic search
+- `id` - Auto-generated unique number for each row
+- `url` - The webpage the chunk came from (e.g. csuci.edu/financialaid/)
+- `title` - The page title at the time of crawling
+- `content` - 800-character slice of text from that page
+- `embedding` - 384-dimensional vector representing the meaning of the content, used for semantic search
 
 **ekhobot_ratings**
 Stores user feedback submitted via the thumbs up/down rating system.
 
-- `id` — Auto-generated unique number for each row
-- `created_at` — Timestamp of when the rating was submitted
-- `user_message` — The question the student asked
-- `bot_response` — The answer EkhoBot gave
-- `rating` — Either "up" (helpful) or "down" (not helpful)
-- `conversation` — Full chat history as JSON at the time of rating, useful for understanding the context around a bad response
+- `id` - Auto-generated unique number for each row
+- `created_at` - Timestamp of when the rating was submitted
+- `user_message` - The question the student asked
+- `bot_response` - The answer EkhoBot gave
+- `rating` - Either "up" (helpful) or "down" (not helpful)
+- `conversation` - Full chat history as JSON at the time of rating, useful for understanding the context around a bad response
 
 ---
 

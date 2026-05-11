@@ -26,7 +26,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { pipeline } from '@xenova/transformers';
 import pg from 'pg';
 import cron from 'node-cron';
-import { fetchLatestEvents } from './scripts/fetchEvents.js';
+import { fetchLatestEvents, fetchServiceStatus } from './scripts/fetchEvents.js';
 
 /*
 ================================================================================
@@ -82,12 +82,22 @@ fetchLatestEvents().catch(err =>
   console.log('Initial event fetch failed:', err.message)
 );
 
+// Fetch service status on startup
+fetchServiceStatus().catch(err =>
+  console.log('Initial status fetch failed:', err.message)
+);
+
 // Schedule nightly refresh at midnight
 cron.schedule('0 0 * * *', async () => {
   console.log('Nightly event refresh starting...');
   await fetchLatestEvents().catch(err => 
     console.log('Nightly fetch failed:', err.message)
   );
+});
+
+// Refresh service status every 30 minutes
+cron.schedule('*/30 * * * *', async () => {
+  await fetchServiceStatus();
 });
 
 /*
@@ -279,10 +289,10 @@ const SYSTEM_PROMPT = `You are EkhoBot, the virtual assistant for CSU Channel Is
 Answer using the context provided. Be helpful, direct, and always include useful details.
 
 FORMATTING RULES:
-- Keep answers to 2-4 sentences max.
+- Keep messages short and concise.
 - Ask before providing a phone number, email, link, or office location when relevant.
 - Put each piece of contact info or URLs on its own line using a newline character.
-- Never say "I don't have that information" — always direct to a specific resource.
+- Never say "I don't have that information" - always direct to a specific resource.
 - Never use bullet points or dashes. Use plain sentences and line breaks only.
 - If the user writes in Spanish, respond in Spanish using the same formatting rules.
 - Always include the same contact info, links and phone numbers regardless of language.
@@ -290,13 +300,13 @@ FORMATTING RULES:
 EXAMPLE of a good response to "How do I contact Financial Aid?":
 You can reach the Financial Aid Office by phone or email during business hours.
 
-Phone: (805) 437-8530
+Phone: (805)437-8530
 Email: financialaid@csuci.edu
 Website: csuci.edu/financialaid
 Office: Sage Hall 1100, Mon-Fri 8am-5pm
 Campus Map: https://maps.csuci.edu/
 
-CRITICAL CSUCI FACTS — always use these when relevant:
+CRITICAL CSUCI FACTS - always use these when relevant:
 - Main campus phone: (805) 437-8400
 - Campus address: 1 University Dr., Camarillo, CA 93012
 - Admissions: (805) 437-8520 | admissions@csuci.edu
@@ -328,7 +338,9 @@ CRITICAL CSUCI FACTS — always use these when relevant:
   Facebook: CSU Channel Islands -> facebook.com/CSUChannelIslands
   YouTube: youtube.com/user/ciwatch
   Pinterest: pinterest.com/csuci
-  Social directory: csuci.edu/news/social`;
+  Social directory: csuci.edu/news/social
+  
+  If user asks about issues with any CI services provide this exact link: https://ciapps.csuci.edu/status`;
 
 /*
 ================================================================================
@@ -435,7 +447,7 @@ app.post('/chat', async (req, res) => {
       
     } else {
       // Low similarity -> use web search instead
-      console.log(`Low similarity (${bestScore.toFixed(2)}) — using web search for: "${lastMessage.slice(0, 50)}"`);
+      console.log(`Low similarity (${bestScore.toFixed(2)}) - using web search for: "${lastMessage.slice(0, 50)}"`);
       context = await webSearchFallback(lastMessage);
       source = 'web search';
     }
@@ -450,7 +462,7 @@ app.post('/chat', async (req, res) => {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 300,  // Keep responses concise
-      system: `${SYSTEM_PROMPT}\n\nCSUCI CONTEXT (from ${source}) — USE THIS CONTENT TO ANSWER, DO NOT IGNORE IT:\n${context}`,
+      system: `${SYSTEM_PROMPT}\n\nCSUCI CONTEXT (from ${source}) - USE THIS CONTENT TO ANSWER, DO NOT IGNORE IT:\n${context}`,
       messages,
     });
 
@@ -458,7 +470,7 @@ app.post('/chat', async (req, res) => {
 
   } catch (err) {
     console.error('Chat error:', err.message);
-    res.status(500).json({ error: 'EkhoBot hit a wave — try again!' });
+    res.status(500).json({ error: 'EkhoBot hit a wave - try again!' });
   }
 });
 
@@ -490,7 +502,7 @@ app.post('/rate', async (req, res) => {
       [userMessage, botResponse, rating, JSON.stringify(conversation)]
     );
 
-    console.log(`Rating saved: ${rating} — "${userMessage.slice(0, 60)}"`);
+    console.log(`Rating saved: ${rating} - "${userMessage.slice(0, 60)}"`);
     res.json({ success: true });
 
   } catch (err) {
