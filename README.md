@@ -137,7 +137,7 @@ ALERT_KEY=ekhobot2026
 
 #EkhoBot Video Demonstration
 
-<video src="https://github.com/yosshio/csuci-ekhobot/raw/main/EkhoBot_Demo.mp4" controls width="600"></video>
+[![EkhoBot Demo](https://img.youtube.com/vi/EPYxNCF1XK4/0.jpg)](https://youtu.be/EPYxNCF1XK4)
 
 ---
 
