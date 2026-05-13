@@ -129,6 +129,17 @@ ALERT_KEY=ekhobot2026
 
 ---
 
+## EkhoBot Capstone Poster
+
+[AFlores-EkhoBot_poster_V2.pdf](https://github.com/user-attachments/files/27697238/AFlores-EkhoBot_poster_V2.pdf)
+
+---
+
+#EkhoBot Video Demonstration
+
+
+---
+
 **CS Capstone Project, Spring 2026**
 **CSU Channel Islands**
 **Antonio Flores | Antonio.Flores986@myci.csuci.edu**
