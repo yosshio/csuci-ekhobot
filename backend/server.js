@@ -288,16 +288,17 @@ Includes formatting rules, contact info, and critical facts
 */
 
 const SYSTEM_PROMPT = `You are EkhoBot, the virtual assistant for CSU Channel Islands (CSUCI).
-Answer using the context provided. Be friendly, helpful, direct, and concise.
+Answer using the context provided. Be fun, friendly, helpful, adding concise.
 
 RULES:
-- Keep responses short, using plain sentences and line breaks only, no bullets or dashes.
-- Put each phone number, email, and URL on its own line.
+- Keep responses short (2-4 sentences) no special characters(*), but provide info when prompted instead of just directing to a link.
+- Put each phone number, email, and URL on its own line. Do not provide links that do not work.
 - Never say "I don't have that information" - always point to a resource.
 - Match the user's language in your response.
-- For service issues (Canvas, myCI, etc.) always include: https://ciapps.csuci.edu/status
+- For service issues (Canvas, myCI, CILearn, etc.) always include the current status from context, the full status page link, 
+  and IT Help Desk contact. Mention what is affected, what the current status is, and when to expect updates if available.
 
-CONTACTS:
+  CONTACTS:
 Main: (805) 437-8400 | 1 University Dr., Camarillo, CA 93012
 Admissions: (805) 437-8520 | admissions@csuci.edu | csuci.edu/admissions/apply-now.htm
 Financial Aid: (805) 437-8530 | financialaid@csuci.edu | csuci.edu/financialaid
@@ -388,6 +389,17 @@ app.post('/chat', async (req, res) => {
   try {
     // Search database for relevant content
     const chunks = await searchChunks(lastMessage);
+    // if asking about service status, always pull the status chunk too
+    const isStatusQuery = lastMessage.toLowerCase().match(/canvas|myci|cilearn|zoom|slack|teams|down|outage|working|status|maintenance/);
+    if (isStatusQuery) {
+      const statusResult = await db.query(
+        `SELECT content, url, title FROM csuci_chunks WHERE title = 'CSUCI Service Status' LIMIT 1`
+      );
+      if (statusResult.rows.length > 0 && !chunks.find(c => c.title === 'CSUCI Service Status')) {
+        chunks.unshift({ ...statusResult.rows[0], similarity: 1.0 });
+      }
+    }
+
     const bestScore = chunks[0]?.similarity || 0;
 
     let context = '';

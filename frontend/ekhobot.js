@@ -823,7 +823,7 @@ async function openChat() {
   // Show welcome message on first open
   if (!chatInitialized) {
     chatInitialized = true;
-    addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?\n\nTambién puedo ayudarte en español. 日本語でもお手伝いできます。");
+    addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?");
     addHint("EkhoBot can make mistakes, verify important infomation.");
     renderChips('root');
   }
@@ -865,7 +865,7 @@ PURPOSE: Allow users to clear chat
 
   const msgs = document.getElementById('ekho-messages');
   msgs.innerHTML = '';
-  addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?\n\nTambién puedo ayudarte en español. 日本語でもお手伝いできます。");
+  addBotMessage("Hi! I'm EkhoBot, your CSUCI virtual assistant. What can I help you with today?");
   addHint("EkhoBot can make mistakes, verify important infomation.");
   renderChips('root');
 }
