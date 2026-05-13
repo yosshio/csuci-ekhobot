@@ -123,9 +123,20 @@ ALERT_KEY=ekhobot2026
 
 - **Backend:** Node.js, Express
 - **Database:** PostgreSQL with pgvector (hosted on Supabase)
-- **AI:** Claude Sonnet 4 (Anthropic), Xenova/all-MiniLM-L6-v2 (embeddings)
+- **AI:** Claude Sonnet 4, Xenova/all-MiniLM-L6-v2 (embeddings)
 - **Crawling:** Cheerio, pdf-parse-new
-- **Frontend:** Vanilla JavaScript
+- **Frontend:** JavaScript
+
+---
+
+## EkhoBot Capstone Poster
+
+[AFlores-EkhoBot_poster_V2.pdf](https://github.com/user-attachments/files/27697238/AFlores-EkhoBot_poster_V2.pdf)
+
+---
+
+#EkhoBot Video Demonstration
+
 
 ---
 
