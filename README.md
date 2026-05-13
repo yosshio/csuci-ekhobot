@@ -123,9 +123,9 @@ ALERT_KEY=ekhobot2026
 
 - **Backend:** Node.js, Express
 - **Database:** PostgreSQL with pgvector (hosted on Supabase)
-- **AI:** Claude Sonnet 4 (Anthropic), Xenova/all-MiniLM-L6-v2 (embeddings)
+- **AI:** Claude Sonnet 4, Xenova/all-MiniLM-L6-v2 (embeddings)
 - **Crawling:** Cheerio, pdf-parse-new
-- **Frontend:** Vanilla JavaScript
+- **Frontend:** JavaScript
 
 ---
 
