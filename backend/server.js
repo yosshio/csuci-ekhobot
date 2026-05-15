@@ -64,7 +64,6 @@ CONFIGURATION
 */
 
 // Minimum similarity score to use database results (0.0 to 1.0)
-// Below threshold will fallback to web search
 const SIMILARITY_THRESHOLD = 0.15;
 
 // Number of database chunks to retrieve for context
@@ -102,15 +101,12 @@ cron.schedule('*/30 * * * *', async () => {
 
 /*
 ================================================================================
-MIDDLEWARE
-================================================================================
 */
 
 // CORS configuration - allows localhost requests for development
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman)
-    // or requests from localhost
+    // Allow requests with no origin (mobile apps, curl, Postman) or requests from localhost
     if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin === 'null') {
       callback(null, true);
     } else {
@@ -126,7 +122,7 @@ app.use(express.json());
 EMBEDDING MODEL
 ================================================================================
 Local AI model for converting text queries into vectors
-Same model used by crawler and event fetcher for consistency
+Same model used by crawler and event fetcher
 */
 
 let embedder = null;
@@ -134,7 +130,7 @@ let embedder = null;
 /*
 FUNCTION: loadEmbedder
 PURPOSE: Load and cache the embedding model
-RETURNS: The loaded pipeline
+RETURNS: embedder
 */
 async function loadEmbedder() {
   if (!embedder) {
@@ -149,7 +145,7 @@ async function loadEmbedder() {
 FUNCTION: getEmbedding
 PURPOSE: Convert text into 384 dimensional vector
 PARAMETERS: text (string)
-RETURNS: Array of 384 numbers
+RETURNS: embedding vector
 */
 async function getEmbedding(text) {
   const model = await loadEmbedder();
@@ -175,13 +171,13 @@ VECTOR SEARCH
 /*
 FUNCTION: searchChunks
 PURPOSE: Search database for content relevant to user query
-PARAMETERS: query (string) - User's question
-RETURNS: Array of matching chunks with similarity scores
+PARAMETERS: query (string)
+RETURNS: Array of top K matching chunks by similarity score
 
 Process:
-  1. Enrich query with domain-specific keywords for better matching
+  1. Enrich query with keywords for improved matching in database
   2. Convert query to vector embedding
-  3. Find top K most similar chunks using cosine similarity
+  3. Find top K most similar chunks using cosine similarity/distance
   4. Return chunks sorted by similarity score
 */
 async function searchChunks(query) {
@@ -189,7 +185,7 @@ async function searchChunks(query) {
 
   /*
   Query enrichment: Add context specific prefixes to improve matching
-  This helps the embedding model understand the domain of the question
+  Helps embedding model catagorize the question better
   */
   let enrichedQuery = query;
   
@@ -246,14 +242,14 @@ WEB SEARCH FALLBACK
 
 /*
 FUNCTION: webSearchFallback
-PURPOSE: Use Brave Search API when database has no relevant results
+PURPOSE: Use Brave Search API when database results fall below threshold level
 PARAMETERS: query (string)
 RETURNS: Formatted search results or empty string if failed
 
 This fallback ensures EkhoBot can answer questions even if the content
-was not crawled or indexed in the database.
+was not crawled or indexed in the database
 
-**BRAVE API DOES NOT CURRENTLY HAVE ANY CREDITS AND THEREFORE IS NOT IN USE**
+**BRAVE API DOES NOT HAVE ANY MORE CREDITS AND THEREFORE IS NOT IN USE**
 */
 async function webSearchFallback(query) {
   if (!process.env.BRAVE_SEARCH_KEY) {
@@ -284,7 +280,7 @@ async function webSearchFallback(query) {
 SYSTEM PROMPT
 ================================================================================
 Instructions for Claude AI on how to respond as EkhoBot
-Includes formatting rules, contact info, and critical facts
+Includes formatting rules, contact info, and critical facts (tweaks to improve certain catagories)
 */
 
 const SYSTEM_PROMPT = `You are EkhoBot, the virtual assistant for CSU Channel Islands (CSUCI).
@@ -327,7 +323,7 @@ Daily permit $6 at dispensers in Lots A1-A4. Purchase at csuci.edu/publicsafety/
 ================================================================================
 ALERT SYSTEM
 ================================================================================
-Allows administrators to set campus wide alerts (power outages, closures, lion sightings???, etc)
+Allows administrators to set campus wide alerts (service/power outages, closures, lion sightings???, etc)
 */
 
 let currentAlert = '';
@@ -343,7 +339,7 @@ app.get('/alert', (req, res) => {
 
 /*
 ENDPOINT: POST /alert
-PURPOSE: Set or clear campus alert (requires authentication)
+PURPOSE: Set or clear campus alert (requires authentication, runs on alert key in .env)
 BODY: { message: string, key: string }
 RETURNS: { alert: string } or 401 error
 */
@@ -367,9 +363,7 @@ app.post('/alert', (req, res) => {
 CHAT ENDPOINT
 ================================================================================
 Main chatbot endpoint that processes user questions
-*/
 
-/*
 ENDPOINT: POST /chat
 PURPOSE: Process user message and return AI response
 BODY: { messages: Array<{role: string, content: string}> }
@@ -413,10 +407,10 @@ app.post('/chat', async (req, res) => {
     if (bestScore >= SIMILARITY_THRESHOLD) {
       /*
       Filter out low quality chunks:
-      - Spanish OCR artifacts (Descargue, Escanee)
+      - Spanish OCR artifacts (Descargue, Escanee, common spanish words found in pdfs. only due to lack of multilingual embedding issues)
       - Google Tag Manager code
       - iframes and embedded content
-      - Very short chunks
+      - Very small chunks
       */
       const goodChunks = chunks.filter(c =>
         c.content &&
@@ -507,9 +501,7 @@ app.post('/rate', async (req, res) => {
 ================================================================================
 HEALTH CHECK
 ================================================================================
-*/
 
-/*
 ENDPOINT: GET /health
 PURPOSE: Simple health check for monitoring
 RETURNS: { status: 'ready' }
